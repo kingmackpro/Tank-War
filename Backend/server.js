@@ -121,7 +121,10 @@ tank:tank,
 hp:tank.hp,
 armorHp:tank.armorHp,
 
+/* weapon index (0-based) */
+
 weaponSlot:0,
+
 lastShotTime:0
 
 };
@@ -153,21 +156,35 @@ player.turretAngle=data.turretAngle;
 /* WEAPON SWITCH */
 
 if(data.type==="weapon_switch"){
-player.weaponSlot=data.slot;
+
+const slot=Number(data.slot);
+const index=slot-1;
+
+/* only allow valid weapons */
+
+if(
+Number.isInteger(index) &&
+index>=0 &&
+index<player.tank.weapons.length
+){
+player.weaponSlot=index;
+}
+
 }
 
 /* SHOOT */
 
 if(data.type==="shoot"){
 
-const weapon = player.tank.weapons[player.weaponSlot];
+const weapon=player.tank.weapons[player.weaponSlot];
+
 if(!weapon) return;
 
-const now = Date.now();
+const now=Date.now();
 
-if(now - player.lastShotTime < weapon.cooldown) return;
+if(now-player.lastShotTime<weapon.cooldown) return;
 
-player.lastShotTime = now;
+player.lastShotTime=now;
 
 gameState.projectiles.push({
 
@@ -203,7 +220,6 @@ function updateGame(){
 for(const id in gameState.players){
 
 const p=gameState.players[id];
-
 const SPEED=p.tank.speed;
 
 let dx=0;
@@ -228,7 +244,7 @@ p.y+=dy;
 
 }
 
-/* PROJECTILES (reverse loop to avoid skip bug) */
+/* PROJECTILES */
 
 for(let i=gameState.projectiles.length-1;i>=0;i--){
 
@@ -266,7 +282,7 @@ const armorBefore=p.armorHp;
 let armorDamage=0;
 let hpDamage=0;
 
-/* CASE 1 — armor blocks completely */
+/* armor blocks */
 
 if(armorBefore>0 && effectiveDamage===0){
 
@@ -274,7 +290,7 @@ armorDamage=Math.min(incomingDamage,armorBefore);
 
 }
 
-/* CASE 2 — armor + hp */
+/* armor + hp */
 
 else if(armorBefore>0){
 
@@ -285,7 +301,7 @@ p.hp-=effectiveDamage;
 
 }
 
-/* CASE 3 — armor already broken */
+/* armor gone */
 
 else{
 
@@ -340,7 +356,7 @@ break;
 
 }
 
-/* BROADCAST */
+/* BROADCAST STATE */
 
 const packet=JSON.stringify({
 type:"state",

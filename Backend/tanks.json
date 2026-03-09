@@ -11,8 +11,15 @@
         "name": "Basic Gun",
         "damage": 15,
         "cooldown": 200,
-        "projectileSpeed": 8,
+        "projectileSpeed": 6,
         "projectileSize": 6
+      },
+      {
+        "name": "Fast Gun",
+        "damage": 8,
+        "cooldown": 80,
+        "projectileSpeed": 12,
+        "projectileSize": 4
       }
     ]
   }

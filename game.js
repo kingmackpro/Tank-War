@@ -6,24 +6,24 @@ const socket = new WebSocket("wss://glossary-poly-televisions-approved.trycloudf
 const TANK_SIZE = 40;
 const TANK_HALF = 20;
 
-let playerId=null;
-let map=null;
-let gameState={players:{},projectiles:[]};
+let playerId = null;
+let map = null;
+let gameState = { players:{}, projectiles:[] };
 
-const keys={};
+const keys = {};
 
-let turretAngle=0;
-let aimMode="mouse";
-let activeSlot=1;
+let turretAngle = 0;
+let aimMode = "mouse";
+let activeSlot = 1;
 
-const rotateSpeed=0.06;
+const rotateSpeed = 0.06;
 
 /* VISUAL EFFECTS */
 
-let particles=[];
-let shakeTime=0;
-let shakeX=0;
-let shakeY=0;
+let particles = [];
+let shakeTime = 0;
+let shakeX = 0;
+let shakeY = 0;
 
 /* INPUT */
 
@@ -31,9 +31,25 @@ document.addEventListener("keydown",(e)=>{
 
 keys[e.key.toLowerCase()] = true;
 
+/* hotbar switch */
+
 if(e.key>="1" && e.key<="5"){
-activeSlot=parseInt(e.key);
-socket.send(JSON.stringify({type:"weapon_switch",slot:activeSlot}));
+
+const newSlot = parseInt(e.key);
+
+if(newSlot !== activeSlot){
+
+activeSlot = newSlot;
+
+if(socket.readyState === WebSocket.OPEN){
+socket.send(JSON.stringify({
+type:"weapon_switch",
+slot:newSlot
+}));
+}
+
+}
+
 }
 
 if(e.key==="ArrowLeft"||e.key==="ArrowRight") aimMode="keyboard";
@@ -50,17 +66,17 @@ keys[e.key.toLowerCase()] = false;
 
 canvas.addEventListener("mousemove",(e)=>{
 
-const rect=canvas.getBoundingClientRect();
+const rect = canvas.getBoundingClientRect();
 
-const mx=e.clientX-rect.left;
-const my=e.clientY-rect.top;
+const mx = e.clientX - rect.left;
+const my = e.clientY - rect.top;
 
-const p=gameState.players[playerId];
+const p = gameState.players[playerId];
 if(!p) return;
 
-turretAngle=Math.atan2(my-p.y,mx-p.x);
+turretAngle = Math.atan2(my-p.y,mx-p.x);
 
-aimMode="mouse";
+aimMode = "mouse";
 
 });
 
@@ -68,7 +84,7 @@ canvas.addEventListener("mousedown",shoot);
 
 function shoot(){
 
-if(activeSlot!==1) return;
+if(socket.readyState !== WebSocket.OPEN) return;
 
 socket.send(JSON.stringify({type:"shoot"}));
 
@@ -76,23 +92,23 @@ socket.send(JSON.stringify({type:"shoot"}));
 
 /* SERVER */
 
-socket.onmessage=(event)=>{
+socket.onmessage = (event)=>{
 
-const data=JSON.parse(event.data);
+const data = JSON.parse(event.data);
 
-if(data.type==="init") playerId=data.id;
-if(data.type==="map") map=data.data;
-if(data.type==="state") gameState=data;
+if(data.type==="init") playerId = data.id;
+if(data.type==="map") map = data.data;
+if(data.type==="state") gameState = data;
 
 /* DAMAGE EVENT */
 
 if(data.type==="damage"){
 
-const p=gameState.players[data.targetId];
+const p = gameState.players[data.targetId];
 if(!p) return;
 
-if(data.targetId===playerId){
-shakeTime=Date.now()+150;
+if(data.targetId === playerId){
+shakeTime = Date.now() + 150;
 }
 
 if(data.armorDamage>0){
@@ -114,9 +130,13 @@ function updateInput(){
 if(!playerId) return;
 
 if(aimMode==="keyboard"){
-if(keys["arrowleft"]) turretAngle-=rotateSpeed;
-if(keys["arrowright"]) turretAngle+=rotateSpeed;
+
+if(keys["arrowleft"]) turretAngle -= rotateSpeed;
+if(keys["arrowright"]) turretAngle += rotateSpeed;
+
 }
+
+if(socket.readyState === WebSocket.OPEN){
 
 socket.send(JSON.stringify({
 type:"input",
@@ -124,6 +144,8 @@ keys:keys,
 turretAngle:turretAngle,
 aimMode:aimMode
 }));
+
+}
 
 }
 
@@ -148,22 +170,26 @@ color:color
 
 function updateParticles(){
 
-particles.forEach((p,i)=>{
-p.x+=p.vx;
-p.y+=p.vy;
+for(let i=particles.length-1;i>=0;i--){
+
+const p = particles[i];
+
+p.x += p.vx;
+p.y += p.vy;
 p.life--;
 
 if(p.life<=0){
 particles.splice(i,1);
 }
-});
+
+}
 
 }
 
 function drawParticles(){
 
 particles.forEach(p=>{
-ctx.fillStyle=p.color;
+ctx.fillStyle = p.color;
 ctx.fillRect(p.x,p.y,3,3);
 });
 
@@ -190,10 +216,10 @@ map.covers.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
 
 function drawHUD(){
 
-const p=gameState.players[playerId];
+const p = gameState.players[playerId];
 if(!p) return;
 
-const weapon=p.tank.weapons[p.weaponSlot];
+const weapon = p.tank.weapons[p.weaponSlot] || null;
 
 ctx.fillStyle="white";
 ctx.font="16px monospace";
@@ -202,7 +228,11 @@ ctx.fillText("HP: "+p.hp,10,20);
 ctx.fillText("Armor: "+p.armorHp,10,40);
 ctx.fillText("Energy: "+p.tank.energy,10,60);
 ctx.fillText("Speed: "+p.tank.speed,10,80);
-ctx.fillText("Weapon: "+weapon.name,10,100);
+
+ctx.fillText(
+"Weapon: "+(weapon ? weapon.name : "Empty"),
+10,100
+);
 
 }
 
@@ -210,32 +240,49 @@ ctx.fillText("Weapon: "+weapon.name,10,100);
 
 function drawHotbar(){
 
-const slots=5;
-const size=60;
-const spacing=10;
+const p = gameState.players[playerId];
+if(!p) return;
 
-const total=slots*size+(slots-1)*spacing;
-const start=canvas.width/2-total/2;
+const weapons = p.tank.weapons;
 
-const y=canvas.height-size-10;
+const slots = 5;
+const size = 60;
+const spacing = 10;
 
-for(let i=1;i<=slots;i++){
+const total = slots*size+(slots-1)*spacing;
+const start = canvas.width/2-total/2;
 
-const x=start+(i-1)*(size+spacing);
+const y = canvas.height-size-10;
 
-ctx.fillStyle=i===activeSlot?"#aaa":"#555";
+for(let i=0;i<slots;i++){
+
+const x = start + i*(size+spacing);
+
+const weapon = weapons[i] || null;
+
+ctx.fillStyle = (i+1===activeSlot) ? "#aaa" : "#555";
 ctx.fillRect(x,y,size,size);
 
 ctx.strokeStyle="#222";
 ctx.strokeRect(x,y,size,size);
 
 ctx.fillStyle="#000";
-ctx.font="20px monospace";
-ctx.fillText(i,x+25,y+35);
+ctx.font="18px monospace";
+ctx.fillText(i+1,x+24,y+34);
 
-if(i===1){
+/* show weapon indicator */
+
+if(weapon){
+
 ctx.fillStyle="#ffd800";
-ctx.fillRect(x+26,y+12,8,26);
+
+ctx.fillRect(
+x + size/2 - 4,
+y + 12,
+8,
+26
+);
+
 }
 
 }
@@ -267,9 +314,9 @@ shakeY=0;
 
 for(const id in gameState.players){
 
-const p=gameState.players[id];
+const p = gameState.players[id];
 
-ctx.fillStyle=id===playerId?"#3cb371":"#ff4444";
+ctx.fillStyle = id===playerId ? "#3cb371" : "#ff4444";
 
 ctx.fillRect(
 p.x-TANK_HALF+shakeX,
