@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const socket = new WebSocket("ws://localhost:8080");
+const socket = new WebSocket("ws://glossary-poly-televisions-approved.trycloudflare.com");
 
 const TANK_SIZE = 40;
 const TANK_HALF = 20;
