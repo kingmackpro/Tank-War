@@ -1,13 +1,55 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const socket = new WebSocket("wss://discs-apr-different-buzz.trycloudflare.com");
+const SERVER_URL = "wss://discs-apr-different-buzz.trycloudflare.com";
+
+let socket;
+
+/* SESSION */
+
+let sessionId = localStorage.getItem("tankSession");
+
+/* CONNECTION */
+
+function connect(){
+
+socket = new WebSocket(SERVER_URL);
+
+socket.onopen = () => {
+
+console.log("Connected");
+
+socket.send(JSON.stringify({
+type:"session",
+sessionId:sessionId
+}));
+
+};
+
+socket.onmessage = handleServerMessage;
+
+socket.onclose = () => {
+
+console.log("Disconnected, reconnecting...");
+
+setTimeout(connect,2000);
+
+};
+
+socket.onerror = () => socket.close();
+
+}
+
+connect();
+
+/* GAME STATE */
 
 const TANK_SIZE = 40;
 const TANK_HALF = 20;
 
 let playerId = null;
 let map = null;
+
 let gameState = { players:{}, projectiles:[] };
 
 const keys = {};
@@ -18,6 +60,8 @@ let activeSlot = 1;
 
 const rotateSpeed = 0.06;
 
+let lastServerTime = 0;
+
 /* VISUAL EFFECTS */
 
 let particles = [];
@@ -27,13 +71,19 @@ let shakeTime = 0;
 let shakeX = 0;
 let shakeY = 0;
 
+/* TAB VISIBILITY */
+
+let tabActive = true;
+
+document.addEventListener("visibilitychange",()=>{
+tabActive = !document.hidden;
+});
+
 /* INPUT */
 
 document.addEventListener("keydown",(e)=>{
 
 keys[e.key.toLowerCase()] = true;
-
-/* hotbar switch */
 
 if(e.key>="1" && e.key<="5"){
 
@@ -92,19 +142,47 @@ socket.send(JSON.stringify({type:"shoot"}));
 
 }
 
-/* SERVER */
+/* SERVER MESSAGE */
 
-socket.onmessage = (event)=>{
+function handleServerMessage(event){
 
 const data = JSON.parse(event.data);
 
-if(data.type==="init") playerId = data.id;
-if(data.type==="map") map = data.data;
-if(data.type==="state") gameState = data;
+/* SESSION */
 
-/* DAMAGE EVENT */
+if(data.type==="session"){
+
+sessionId = data.sessionId;
+
+localStorage.setItem("tankSession",sessionId);
+
+}
+
+/* INIT */
+
+if(data.type==="init") playerId = data.id;
+
+/* MAP */
+
+if(data.type==="map") map = data.data;
+
+/* STATE WITH TIMESTAMP */
+
+if(data.type==="state"){
+
+if(data.time < lastServerTime) return;
+
+lastServerTime = data.time;
+
+gameState = data;
+
+}
+
+/* DAMAGE */
 
 if(data.type==="damage"){
+
+if(!tabActive) return;
 
 const p = gameState.players[data.targetId];
 if(!p) return;
@@ -114,22 +192,18 @@ shakeTime = Date.now()+150;
 }
 
 if(data.armorDamage>0){
-
 spawnParticles(p.x,p.y,"#4aa3ff");
 spawnDamageText(p.x,p.y-20,data.armorDamage,"#4aa3ff");
-
 }
 
 if(data.hpDamage>0){
-
 spawnParticles(p.x,p.y,"#ff3b3b");
 spawnDamageText(p.x,p.y-35,data.hpDamage,"#ff3b3b");
-
 }
 
 }
 
-};
+}
 
 /* INPUT LOOP */
 
@@ -157,7 +231,9 @@ aimMode:aimMode
 
 }
 
-setInterval(updateInput,1000/60);
+/* 30Hz input (stable networking) */
+
+setInterval(updateInput,1000/30);
 
 /* PARTICLES */
 
@@ -240,15 +316,8 @@ function drawDamageTexts(){
 ctx.font="14px monospace";
 
 damageTexts.forEach(d=>{
-
 ctx.fillStyle=d.color;
-
-ctx.fillText(
-d.text,
-d.x,
-d.y
-);
-
+ctx.fillText(d.text,d.x,d.y);
 });
 
 }
@@ -327,14 +396,10 @@ ctx.fillStyle="#000";
 ctx.font="18px monospace";
 ctx.fillText(i+1,x+24,y+34);
 
-/* weapon icon */
-
 if(weapon){
 
 ctx.fillStyle="#ffd800";
 ctx.fillRect(x + size/2 - 4, y + 12, 8, 26);
-
-/* cooldown bar */
 
 const lastShot = p.lastShotTime || 0;
 const cooldown = weapon.cooldown;
@@ -394,7 +459,7 @@ TANK_SIZE,
 TANK_SIZE
 );
 
-/* ARMOR + HP BAR */
+/* HP + ARMOR BAR */
 
 const barWidth = 40;
 const barHeight = 4;
@@ -402,25 +467,17 @@ const barHeight = 4;
 const armorPercent = p.armorHp / p.tank.armorHp;
 const hpPercent = p.hp / p.tank.hp;
 
-/* place bar BELOW tank */
+const barX = p.x - barWidth/2 + shakeX;
+const barY = p.y + TANK_HALF + 6 + shakeY;
 
-const barX = p.x - barWidth/2;
-const barY = p.y + TANK_HALF + 6;
+ctx.fillStyle="#000";
+ctx.fillRect(barX,barY,barWidth,10);
 
-/* background */
+ctx.fillStyle="#4aa3ff";
+ctx.fillRect(barX,barY,barWidth*armorPercent,barHeight);
 
-ctx.fillStyle = "#000";
-ctx.fillRect(barX, barY, barWidth, 10);
-
-/* armor bar */
-
-ctx.fillStyle = "#4aa3ff";
-ctx.fillRect(barX, barY, barWidth * armorPercent, barHeight);
-
-/* hp bar */
-
-ctx.fillStyle = "#ff3b3b";
-ctx.fillRect(barX, barY + 6, barWidth * hpPercent, barHeight);
+ctx.fillStyle="#ff3b3b";
+ctx.fillRect(barX,barY+6,barWidth*hpPercent,barHeight);
 
 /* turret */
 
@@ -455,6 +512,8 @@ drawHotbar();
 drawHUD();
 
 }
+
+/* LOOP */
 
 function loop(){
 

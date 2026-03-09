@@ -41,6 +41,10 @@ players:{},
 projectiles:[]
 };
 
+/* SESSION SYSTEM */
+
+const sessions = {};
+
 /* PHYSICS */
 
 function rectFromCenter(cx,cy,w,h){
@@ -105,11 +109,11 @@ const wss=new WebSocket.Server({server});
 
 /* CREATE PLAYER */
 
-function createPlayer(id){
+function createPlayer(){
 
 const tank = JSON.parse(JSON.stringify(tanks.defaultTank));
 
-gameState.players[id]={
+return {
 
 x:450,
 y:300,
@@ -121,29 +125,57 @@ tank:tank,
 hp:tank.hp,
 armorHp:tank.armorHp,
 
-/* weapon index (0-based) */
-
 weaponSlot:0,
-
 lastShotTime:0
 
 };
 
 }
 
+/* CONNECTION */
+
 wss.on("connection",(ws)=>{
 
-const id=Math.random().toString(36).substring(2,9);
+let player=null;
+let playerId=null;
 
-createPlayer(id);
-
-ws.send(JSON.stringify({type:"init",id}));
-ws.send(JSON.stringify({type:"map",data:map}));
+/* MESSAGE */
 
 ws.on("message",(msg)=>{
 
 const data=JSON.parse(msg);
-const player=gameState.players[id];
+
+/* SESSION HANDSHAKE */
+
+if(data.type==="session"){
+
+let sessionId=data.sessionId;
+
+if(sessionId && sessions[sessionId]){
+
+playerId=sessionId;
+player=sessions[sessionId];
+
+}else{
+
+playerId=Math.random().toString(36).substring(2,9);
+
+player=createPlayer();
+
+sessions[playerId]=player;
+
+}
+
+gameState.players[playerId]=player;
+
+ws.send(JSON.stringify({type:"session",sessionId:playerId}));
+
+ws.send(JSON.stringify({type:"init",id:playerId}));
+ws.send(JSON.stringify({type:"map",data:map}));
+
+return;
+}
+
 if(!player) return;
 
 /* INPUT */
@@ -159,8 +191,6 @@ if(data.type==="weapon_switch"){
 
 const slot=Number(data.slot);
 const index=slot-1;
-
-/* only allow valid weapons */
 
 if(
 Number.isInteger(index) &&
@@ -197,7 +227,7 @@ vy:Math.sin(player.turretAngle)*weapon.projectileSpeed,
 size:weapon.projectileSize,
 damage:weapon.damage,
 
-ownerId:id
+ownerId:playerId
 
 });
 
@@ -205,8 +235,12 @@ ownerId:id
 
 });
 
+/* DISCONNECT */
+
 ws.on("close",()=>{
-delete gameState.players[id];
+
+delete gameState.players[playerId];
+
 });
 
 });
@@ -360,6 +394,7 @@ break;
 
 const packet=JSON.stringify({
 type:"state",
+time:Date.now(),
 players:gameState.players,
 projectiles:gameState.projectiles
 });
