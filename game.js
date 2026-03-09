@@ -3,6 +3,9 @@ const ctx = canvas.getContext("2d");
 
 const socket = new WebSocket("ws://localhost:8080");
 
+const TANK_SIZE = 40;
+const TANK_HALF = 20;
+
 let playerId=null;
 let map=null;
 let gameState={players:{},projectiles:[]};
@@ -13,13 +16,13 @@ let turretAngle=0;
 let aimMode="mouse";
 let activeSlot=1;
 
-const rotateSpeed = 0.06;
+const rotateSpeed=0.06;
 
 /* INPUT */
 
 document.addEventListener("keydown",(e)=>{
 
-keys[e.key.toLowerCase()]=true;
+keys[e.key.toLowerCase()] = true;
 
 if(e.key>="1" && e.key<="5"){
 
@@ -32,19 +35,19 @@ slot:activeSlot
 
 }
 
-if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+if(e.key==="ArrowLeft"||e.key==="ArrowRight")
 aimMode="keyboard";
-}
 
-if(e.key===" "){
+if(e.key===" ")
 shoot();
-}
 
 });
 
 document.addEventListener("keyup",(e)=>{
-keys[e.key.toLowerCase()]=false;
+keys[e.key.toLowerCase()] = false;
 });
+
+/* MOUSE AIM */
 
 canvas.addEventListener("mousemove",(e)=>{
 
@@ -135,7 +138,8 @@ const spacing=10;
 
 const total=slots*size+(slots-1)*spacing;
 const start=canvas.width/2-total/2;
-const y=canvas.height-70;
+
+const y = canvas.height - size - 10;
 
 for(let i=1;i<=slots;i++){
 
@@ -179,7 +183,7 @@ const p=gameState.players[id];
 
 ctx.fillStyle=id===playerId?"#3cb371":"#ff4444";
 
-ctx.fillRect(p.x-20,p.y-20,40,40);
+ctx.fillRect(p.x-TANK_HALF,p.y-TANK_HALF,TANK_SIZE,TANK_SIZE);
 
 ctx.save();
 
@@ -198,7 +202,7 @@ ctx.restore();
 ctx.fillStyle="#ffd800";
 
 gameState.projectiles.forEach(b=>{
-ctx.fillRect(b.x,b.y,b.size,b.size);
+ctx.fillRect(b.x-3,b.y-3,6,6);
 });
 
 drawHotbar();

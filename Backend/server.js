@@ -1,59 +1,106 @@
 const http = require("http");
 const fs = require("fs");
-const path = require("path");
 const WebSocket = require("ws");
+
+/* CONSTANTS */
 
 const PORT = 8080;
 
-/* ---------------- MAP DATA ---------------- */
+const TANK_SIZE = 40;
+const TANK_HALF = TANK_SIZE / 2;
+const BULLET_SIZE = 6;
+const BULLET_HALF = BULLET_SIZE / 2;
+const BARREL_LENGTH = 30;
+
+const PLAYER_SPEED = 3;
+const BULLET_SPEED = 8;
+
+/* MAP */
 
 const map = {
-walls: [
+walls:[
 {x:0,y:0,w:900,h:20},
 {x:0,y:580,w:900,h:20},
 {x:0,y:0,w:20,h:600},
 {x:880,y:0,w:20,h:600}
 ],
 
-stones: [
-{x:200,y:200,w:80,h:80}
+stones:[
+{x:250,y:200,w:80,h:80}
 ],
 
-covers: [
+covers:[
 {x:600,y:150,w:100,h:50},
 {x:400,y:450,w:120,h:40}
 ]
 };
 
-/* ---------------- GAME STATE ---------------- */
+/* GAME STATE */
 
 const gameState = {
 players:{},
 projectiles:[]
 };
 
-/* ---------------- HTTP SERVER ---------------- */
+/* PHYSICS HELPERS */
+
+function rect(x,y,w,h){
+return {x,y,w,h};
+}
+
+function rectFromCenter(cx,cy,w,h){
+return {
+x:cx-w/2,
+y:cy-h/2,
+w,
+h
+};
+}
+
+function intersects(a,b){
+
+return (
+a.x < b.x + b.w &&
+a.x + a.w > b.x &&
+a.y < b.y + b.h &&
+a.y + a.h > b.y
+);
+
+}
+
+function mapCollision(box){
+
+const objects = [...map.walls,...map.stones,...map.covers];
+
+for(const o of objects){
+if(intersects(box,o)) return true;
+}
+
+return false;
+
+}
+
+/* HTTP SERVER */
 
 const server = http.createServer((req,res)=>{
 
-let filePath="./";
+let file = "./";
 
-if(req.url==="/") filePath+="index.html";
-else filePath+=req.url;
+if(req.url === "/") file += "index.html";
+else file += req.url;
 
-const ext=path.extname(filePath);
-
-let type="text/plain";
-if(ext==".html") type="text/html";
-if(ext==".js") type="text/javascript";
-
-fs.readFile(filePath,(err,data)=>{
+fs.readFile(file,(err,data)=>{
 
 if(err){
 res.writeHead(404);
 res.end("Not found");
 return;
 }
+
+let type="text/plain";
+
+if(file.endsWith(".html")) type="text/html";
+if(file.endsWith(".js")) type="text/javascript";
 
 res.writeHead(200,{"Content-Type":type});
 res.end(data);
@@ -62,144 +109,103 @@ res.end(data);
 
 });
 
-server.listen(PORT,()=>console.log("Server running http://localhost:8080"));
+server.listen(PORT,()=>console.log("Server running on 8080"));
 
-/* ---------------- WEBSOCKET ---------------- */
+/* WEBSOCKET */
 
-const wss=new WebSocket.Server({server});
+const wss = new WebSocket.Server({server});
 
-/* ---------------- UTILS ---------------- */
+wss.on("connection",(ws)=>{
 
-function rectCollision(a,b){
+const id = Math.random().toString(36).substring(2,9);
 
-return a.x < b.x + b.w &&
-a.x + a.w > b.x &&
-a.y < b.y + b.h &&
-a.y + a.h > b.y;
-
-}
-
-function createPlayer(id){
-
-gameState.players[id]={
+gameState.players[id] = {
 x:450,
 y:300,
 turretAngle:0,
-aimMode:"mouse",
 keys:{},
 weaponSlot:1
 };
 
-}
-
-/* ---------------- CONNECTION ---------------- */
-
-wss.on("connection",(ws)=>{
-
-const id=Math.random().toString(36).substring(2,9);
-
-createPlayer(id);
-
-console.log("Client connected:",id);
-
-/* send player id */
 ws.send(JSON.stringify({type:"init",id}));
-
-/* send map */
-ws.send(JSON.stringify({
-type:"map",
-data:map
-}));
+ws.send(JSON.stringify({type:"map",data:map}));
 
 ws.on("message",(msg)=>{
 
-const data=JSON.parse(msg);
-
-const player=gameState.players[id];
+const data = JSON.parse(msg);
+const player = gameState.players[id];
 if(!player) return;
 
-/* PLAYER INPUT */
+if(data.type === "input"){
 
-if(data.type==="input"){
-
-player.keys=data.keys;
-player.turretAngle=data.turretAngle;
-player.aimMode=data.aimMode;
+player.keys = data.keys;
+player.turretAngle = data.turretAngle;
 
 }
 
-/* SHOOT */
+if(data.type === "weapon_switch"){
+player.weaponSlot = data.slot;
+}
 
-if(data.type==="shoot"){
+if(data.type === "shoot"){
 
-const speed=8;
+if(player.weaponSlot !== 1) return;
+
+const spawnX =
+player.x + Math.cos(player.turretAngle) * BARREL_LENGTH;
+
+const spawnY =
+player.y + Math.sin(player.turretAngle) * BARREL_LENGTH;
 
 gameState.projectiles.push({
 
-x:player.x,
-y:player.y,
-vx:Math.cos(player.turretAngle)*speed,
-vy:Math.sin(player.turretAngle)*speed,
-size:6,
-ownerId:id
+x:spawnX,
+y:spawnY,
+vx:Math.cos(player.turretAngle) * BULLET_SPEED,
+vy:Math.sin(player.turretAngle) * BULLET_SPEED,
+size:BULLET_SIZE,
+owner:id
 
 });
-
-}
-
-/* WEAPON SWITCH */
-
-if(data.type==="weapon_switch"){
-
-player.weaponSlot=data.slot;
 
 }
 
 });
 
 ws.on("close",()=>{
-
 delete gameState.players[id];
-console.log("Player disconnected:",id);
-
 });
 
 });
 
-/* ---------------- GAME LOOP ---------------- */
-
-const SPEED=3;
+/* GAME LOOP */
 
 function updateGame(){
 
+/* PLAYERS */
+
 for(const id in gameState.players){
 
-const p=gameState.players[id];
+const p = gameState.players[id];
 
 let dx=0;
 let dy=0;
 
-if(p.keys.w) dy-=SPEED;
-if(p.keys.s) dy+=SPEED;
-if(p.keys.a) dx-=SPEED;
-if(p.keys.d) dx+=SPEED;
+if(p.keys.w) dy-=PLAYER_SPEED;
+if(p.keys.s) dy+=PLAYER_SPEED;
+if(p.keys.a) dx-=PLAYER_SPEED;
+if(p.keys.d) dx+=PLAYER_SPEED;
 
-const next={
-x:p.x+dx,
-y:p.y+dy,
-w:40,
-h:40
-};
+const nextBox = rectFromCenter(
+p.x + dx,
+p.y + dy,
+TANK_SIZE,
+TANK_SIZE
+);
 
-let blocked=false;
-
-[...map.walls,...map.stones,...map.covers].forEach(o=>{
-if(rectCollision(next,o)) blocked=true;
-});
-
-if(!blocked){
-p.x+=dx;
-p.y+=dy;
+if(!mapCollision(nextBox)){
+p.x += dx;
+p.y += dy;
 }
 
 }
@@ -208,33 +214,33 @@ p.y+=dy;
 
 gameState.projectiles.forEach((b,i)=>{
 
-b.x+=b.vx;
-b.y+=b.vy;
+b.x += b.vx;
+b.y += b.vy;
 
-const rect={x:b.x,y:b.y,w:b.size,h:b.size};
+const box = rectFromCenter(
+b.x,
+b.y,
+BULLET_SIZE,
+BULLET_SIZE
+);
 
-let hit=false;
-
-[...map.walls,...map.stones].forEach(o=>{
-if(rectCollision(rect,o)) hit=true;
-});
-
-if(hit){
+if(mapCollision(box)){
 gameState.projectiles.splice(i,1);
 }
 
 });
 
-/* BROADCAST STATE */
+/* BROADCAST */
 
-const packet=JSON.stringify({
+const packet = JSON.stringify({
 type:"state",
 players:gameState.players,
 projectiles:gameState.projectiles
 });
 
 wss.clients.forEach(c=>{
-if(c.readyState===WebSocket.OPEN) c.send(packet);
+if(c.readyState === WebSocket.OPEN)
+c.send(packet);
 });
 
 }
