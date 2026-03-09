@@ -3,9 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <title>Tank Prototype</title>
+
 <style>
-body { margin:0; overflow:hidden; background:#111; }
-canvas { background:#222; display:block; margin:auto; }
+body{
+margin:0;
+overflow:hidden;
+background:#111;
+font-family:monospace;
+}
+
+canvas{
+display:block;
+margin:auto;
+background:#1a1a1a;
+}
 </style>
 </head>
 <body>
@@ -20,155 +31,274 @@ const ctx = canvas.getContext("2d");
 const keys = {};
 const bullets = [];
 
+let activeWeapon = 1;
+
 const tank = {
-    x: 450,
-    y: 300,
-    size: 40,
-    speed: 3,
-    turretAngle: 0
+x:450,
+y:300,
+size:40,
+speed:3,
+turretAngle:0
 };
 
 const obstacles = [
-    {x:200,y:200,w:80,h:80},
-    {x:600,y:150,w:100,h:50},
-    {x:400,y:450,w:120,h:40}
+{x:200,y:200,w:80,h:80},
+{x:600,y:150,w:100,h:50},
+{x:400,y:450,w:120,h:40}
 ];
 
 const walls = [
-    {x:0,y:0,w:900,h:20},
-    {x:0,y:580,w:900,h:20},
-    {x:0,y:0,w:20,h:600},
-    {x:880,y:0,w:20,h:600}
+{x:0,y:0,w:900,h:20},
+{x:0,y:580,w:900,h:20},
+{x:0,y:0,w:20,h:600},
+{x:880,y:0,w:20,h:600}
 ];
 
 let mouse = {x:0,y:0};
+let lastShot = 0;
+const fireDelay = 200;
 
-document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+document.addEventListener("keydown", e=>{
+
+keys[e.key.toLowerCase()] = true;
+
+/* HOTBAR */
+if(e.key >= "1" && e.key <= "5"){
+activeWeapon = parseInt(e.key);
+}
+
+/* SPACE FIRE */
+if(e.key === " "){
+shoot();
+}
+
+});
+
+document.addEventListener("keyup", e=>{
+keys[e.key.toLowerCase()] = false;
+});
 
 canvas.addEventListener("mousemove", e=>{
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = e.clientX - rect.left;
-    mouse.y = e.clientY - rect.top;
+const rect = canvas.getBoundingClientRect();
+mouse.x = e.clientX - rect.left;
+mouse.y = e.clientY - rect.top;
 });
 
 canvas.addEventListener("mousedown", ()=>{
-    shoot();
+shoot();
 });
 
 function shoot(){
 
-    const speed = 8;
+if(activeWeapon !== 1) return;
 
-    bullets.push({
-        x: tank.x,
-        y: tank.y,
-        vx: Math.cos(tank.turretAngle) * speed,
-        vy: Math.sin(tank.turretAngle) * speed,
-        size:6
-    });
+const now = Date.now();
+if(now - lastShot < fireDelay) return;
+lastShot = now;
+
+const speed = 8;
+
+bullets.push({
+x:tank.x,
+y:tank.y,
+vx:Math.cos(tank.turretAngle)*speed,
+vy:Math.sin(tank.turretAngle)*speed,
+size:6
+});
 
 }
 
 function rectCollision(a,b){
-    return a.x < b.x + b.w &&
-           a.x + a.w > b.x &&
-           a.y < b.y + b.h &&
-           a.y + a.h > b.y;
+
+return a.x < b.x + b.w &&
+a.x + a.w > b.x &&
+a.y < b.y + b.h &&
+a.y + a.h > b.y;
+
 }
 
 function update(){
 
-    let dx = 0;
-    let dy = 0;
+let dx=0;
+let dy=0;
 
-    if(keys["w"]) dy -= tank.speed;
-    if(keys["s"]) dy += tank.speed;
-    if(keys["a"]) dx -= tank.speed;
-    if(keys["d"]) dx += tank.speed;
+if(keys["w"]) dy-=tank.speed;
+if(keys["s"]) dy+=tank.speed;
+if(keys["a"]) dx-=tank.speed;
+if(keys["d"]) dx+=tank.speed;
 
-    const next = {
-        x:tank.x + dx - tank.size/2,
-        y:tank.y + dy - tank.size/2,
-        w:tank.size,
-        h:tank.size
-    };
+const next={
+x:tank.x+dx-tank.size/2,
+y:tank.y+dy-tank.size/2,
+w:tank.size,
+h:tank.size
+};
 
-    let blocked = false;
+let blocked=false;
 
-    [...walls,...obstacles].forEach(o=>{
-        if(rectCollision(next,o)) blocked=true;
-    });
+[...walls,...obstacles].forEach(o=>{
+if(rectCollision(next,o)) blocked=true;
+});
 
-    if(!blocked){
-        tank.x += dx;
-        tank.y += dy;
-    }
+if(!blocked){
+tank.x+=dx;
+tank.y+=dy;
+}
 
-    tank.turretAngle = Math.atan2(mouse.y - tank.y, mouse.x - tank.x);
+/* MOUSE AIM */
 
-    bullets.forEach((b,i)=>{
+let mouseAngle = Math.atan2(mouse.y - tank.y, mouse.x - tank.x);
 
-        b.x += b.vx;
-        b.y += b.vy;
+/* KEYBOARD TURRET CONTROL */
 
-        const rect = {x:b.x,y:b.y,w:b.size,h:b.size};
+const rotateSpeed = 0.05;
 
-        [...walls,...obstacles].forEach(o=>{
-            if(rectCollision(rect,o)){
-                bullets.splice(i,1);
-            }
-        });
+if(keys["arrowleft"]) tank.turretAngle -= rotateSpeed;
+if(keys["arrowright"]) tank.turretAngle += rotateSpeed;
 
-    });
+/* If mouse moved recently, override */
+if(mouse.x !== 0 || mouse.y !== 0){
+tank.turretAngle = mouseAngle;
+}
+
+/* BULLETS */
+
+bullets.forEach((b,i)=>{
+
+b.x+=b.vx;
+b.y+=b.vy;
+
+const rect={x:b.x,y:b.y,w:b.size,h:b.size};
+
+[...walls,...obstacles].forEach(o=>{
+if(rectCollision(rect,o)){
+bullets.splice(i,1);
+}
+});
+
+});
+
+}
+
+function drawGround(){
+
+const tile=40;
+
+for(let x=0;x<canvas.width;x+=tile){
+for(let y=0;y<canvas.height;y+=tile){
+
+ctx.fillStyle = ( (x+y)/tile % 2 ) ? "#2a2a2a" : "#242424";
+ctx.fillRect(x,y,tile,tile);
+
+}
+}
 
 }
 
 function draw(){
 
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    ctx.fillStyle = "#555";
+/* GROUND */
+drawGround();
 
-    walls.forEach(w=>{
-        ctx.fillRect(w.x,w.y,w.w,w.h);
-    });
+/* WALLS */
 
-    ctx.fillStyle = "#666";
+ctx.fillStyle="#444";
 
-    obstacles.forEach(o=>{
-        ctx.fillRect(o.x,o.y,o.w,o.h);
-    });
+walls.forEach(w=>{
+ctx.fillRect(w.x,w.y,w.w,w.h);
+});
 
-    ctx.fillStyle = "#0f0";
-    ctx.fillRect(
-        tank.x - tank.size/2,
-        tank.y - tank.size/2,
-        tank.size,
-        tank.size
-    );
+/* OBSTACLES */
 
-    ctx.save();
-    ctx.translate(tank.x,tank.y);
-    ctx.rotate(tank.turretAngle);
+ctx.fillStyle="#6b4a2d";
 
-    ctx.fillStyle = "#0ff";
-    ctx.fillRect(0,-5,40,10);
+obstacles.forEach(o=>{
+ctx.fillRect(o.x,o.y,o.w,o.h);
+});
 
-    ctx.restore();
+/* TANK BODY */
 
-    ctx.fillStyle = "#ff0";
+ctx.fillStyle="#3cb371";
 
-    bullets.forEach(b=>{
-        ctx.fillRect(b.x,b.y,b.size,b.size);
-    });
+ctx.fillRect(
+tank.x - tank.size/2,
+tank.y - tank.size/2,
+tank.size,
+tank.size
+);
+
+/* TURRET */
+
+ctx.save();
+
+ctx.translate(tank.x,tank.y);
+ctx.rotate(tank.turretAngle);
+
+ctx.fillStyle="#2fd9ff";
+ctx.fillRect(0,-6,42,12);
+
+ctx.restore();
+
+/* BULLETS */
+
+ctx.fillStyle="#ffd800";
+
+bullets.forEach(b=>{
+ctx.fillRect(b.x,b.y,b.size,b.size);
+});
+
+/* HOTBAR */
+
+drawHotbar();
+
+}
+
+function drawHotbar(){
+
+const slots = 5;
+const size = 60;
+const spacing = 10;
+
+const totalWidth = slots*size + (slots-1)*spacing;
+const startX = canvas.width/2 - totalWidth/2;
+const y = canvas.height - 70;
+
+for(let i=1;i<=slots;i++){
+
+const x = startX + (i-1)*(size+spacing);
+
+ctx.fillStyle = (activeWeapon===i) ? "#999" : "#555";
+ctx.fillRect(x,y,size,size);
+
+ctx.strokeStyle="#222";
+ctx.strokeRect(x,y,size,size);
+
+ctx.fillStyle="#000";
+ctx.font="20px monospace";
+ctx.fillText(i,x+25,y+35);
+
+/* slot 1 icon */
+
+if(i===1){
+
+ctx.fillStyle="#ffd800";
+ctx.fillRect(x+25,y+10,10,25);
+
+}
+
+}
 
 }
 
 function gameLoop(){
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+
+update();
+draw();
+
+requestAnimationFrame(gameLoop);
+
 }
 
 gameLoop();
