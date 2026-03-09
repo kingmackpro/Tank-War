@@ -19,6 +19,7 @@ background:#1a1a1a;
 }
 </style>
 </head>
+
 <body>
 
 <canvas id="game" width="900" height="600"></canvas>
@@ -32,6 +33,7 @@ const keys = {};
 const bullets = [];
 
 let activeWeapon = 1;
+let aimMode = "mouse";
 
 const tank = {
 x:450,
@@ -58,7 +60,11 @@ let mouse = {x:0,y:0};
 let lastShot = 0;
 const fireDelay = 200;
 
-document.addEventListener("keydown", e=>{
+
+
+/* INPUT */
+
+document.addEventListener("keydown",e=>{
 
 keys[e.key.toLowerCase()] = true;
 
@@ -72,21 +78,34 @@ if(e.key === " "){
 shoot();
 }
 
+/* KEYBOARD AIM */
+if(e.key === "ArrowLeft" || e.key === "ArrowRight"){
+aimMode = "keyboard";
+}
+
 });
 
-document.addEventListener("keyup", e=>{
+document.addEventListener("keyup",e=>{
 keys[e.key.toLowerCase()] = false;
 });
 
-canvas.addEventListener("mousemove", e=>{
+canvas.addEventListener("mousemove",e=>{
+
 const rect = canvas.getBoundingClientRect();
 mouse.x = e.clientX - rect.left;
 mouse.y = e.clientY - rect.top;
+
+aimMode = "mouse";
+
 });
 
-canvas.addEventListener("mousedown", ()=>{
+canvas.addEventListener("mousedown",()=>{
 shoot();
 });
+
+
+
+/* SHOOT */
 
 function shoot(){
 
@@ -108,6 +127,10 @@ size:6
 
 }
 
+
+
+/* COLLISION */
+
 function rectCollision(a,b){
 
 return a.x < b.x + b.w &&
@@ -117,15 +140,19 @@ a.y + a.h > b.y;
 
 }
 
+
+
+/* UPDATE */
+
 function update(){
 
 let dx=0;
 let dy=0;
 
-if(keys["w"]) dy-=tank.speed;
-if(keys["s"]) dy+=tank.speed;
-if(keys["a"]) dx-=tank.speed;
-if(keys["d"]) dx+=tank.speed;
+if(keys["w"]) dy -= tank.speed;
+if(keys["s"]) dy += tank.speed;
+if(keys["a"]) dx -= tank.speed;
+if(keys["d"]) dx += tank.speed;
 
 const next={
 x:tank.x+dx-tank.size/2,
@@ -141,32 +168,39 @@ if(rectCollision(next,o)) blocked=true;
 });
 
 if(!blocked){
-tank.x+=dx;
-tank.y+=dy;
+tank.x += dx;
+tank.y += dy;
 }
 
-/* MOUSE AIM */
 
-let mouseAngle = Math.atan2(mouse.y - tank.y, mouse.x - tank.x);
-
-/* KEYBOARD TURRET CONTROL */
+/* AIM SYSTEM */
 
 const rotateSpeed = 0.05;
+
+if(aimMode === "keyboard"){
 
 if(keys["arrowleft"]) tank.turretAngle -= rotateSpeed;
 if(keys["arrowright"]) tank.turretAngle += rotateSpeed;
 
-/* If mouse moved recently, override */
-if(mouse.x !== 0 || mouse.y !== 0){
-tank.turretAngle = mouseAngle;
 }
+
+if(aimMode === "mouse"){
+
+tank.turretAngle = Math.atan2(
+mouse.y - tank.y,
+mouse.x - tank.x
+);
+
+}
+
+
 
 /* BULLETS */
 
 bullets.forEach((b,i)=>{
 
-b.x+=b.vx;
-b.y+=b.vy;
+b.x += b.vx;
+b.y += b.vy;
 
 const rect={x:b.x,y:b.y,w:b.size,h:b.size};
 
@@ -180,6 +214,10 @@ bullets.splice(i,1);
 
 }
 
+
+
+/* DRAW GROUND */
+
 function drawGround(){
 
 const tile=40;
@@ -187,7 +225,7 @@ const tile=40;
 for(let x=0;x<canvas.width;x+=tile){
 for(let y=0;y<canvas.height;y+=tile){
 
-ctx.fillStyle = ( (x+y)/tile % 2 ) ? "#2a2a2a" : "#242424";
+ctx.fillStyle = ((x+y)/tile % 2) ? "#2a2a2a" : "#242424";
 ctx.fillRect(x,y,tile,tile);
 
 }
@@ -195,79 +233,23 @@ ctx.fillRect(x,y,tile,tile);
 
 }
 
-function draw(){
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
 
-/* GROUND */
-drawGround();
-
-/* WALLS */
-
-ctx.fillStyle="#444";
-
-walls.forEach(w=>{
-ctx.fillRect(w.x,w.y,w.w,w.h);
-});
-
-/* OBSTACLES */
-
-ctx.fillStyle="#6b4a2d";
-
-obstacles.forEach(o=>{
-ctx.fillRect(o.x,o.y,o.w,o.h);
-});
-
-/* TANK BODY */
-
-ctx.fillStyle="#3cb371";
-
-ctx.fillRect(
-tank.x - tank.size/2,
-tank.y - tank.size/2,
-tank.size,
-tank.size
-);
-
-/* TURRET */
-
-ctx.save();
-
-ctx.translate(tank.x,tank.y);
-ctx.rotate(tank.turretAngle);
-
-ctx.fillStyle="#2fd9ff";
-ctx.fillRect(0,-6,42,12);
-
-ctx.restore();
-
-/* BULLETS */
-
-ctx.fillStyle="#ffd800";
-
-bullets.forEach(b=>{
-ctx.fillRect(b.x,b.y,b.size,b.size);
-});
-
-/* HOTBAR */
-
-drawHotbar();
-
-}
+/* DRAW HOTBAR */
 
 function drawHotbar(){
 
-const slots = 5;
-const size = 60;
-const spacing = 10;
+const slots=5;
+const size=60;
+const spacing=10;
 
-const totalWidth = slots*size + (slots-1)*spacing;
-const startX = canvas.width/2 - totalWidth/2;
-const y = canvas.height - 70;
+const totalWidth=slots*size + (slots-1)*spacing;
+const startX=canvas.width/2 - totalWidth/2;
+const y=canvas.height - 70;
 
 for(let i=1;i<=slots;i++){
 
-const x = startX + (i-1)*(size+spacing);
+const x=startX + (i-1)*(size+spacing);
 
 ctx.fillStyle = (activeWeapon===i) ? "#999" : "#555";
 ctx.fillRect(x,y,size,size);
@@ -279,18 +261,71 @@ ctx.fillStyle="#000";
 ctx.font="20px monospace";
 ctx.fillText(i,x+25,y+35);
 
-/* slot 1 icon */
-
 if(i===1){
-
 ctx.fillStyle="#ffd800";
 ctx.fillRect(x+25,y+10,10,25);
-
 }
 
 }
 
 }
+
+
+
+/* DRAW */
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+drawGround();
+
+
+ctx.fillStyle="#444";
+walls.forEach(w=>{
+ctx.fillRect(w.x,w.y,w.w,w.h);
+});
+
+
+ctx.fillStyle="#6b4a2d";
+obstacles.forEach(o=>{
+ctx.fillRect(o.x,o.y,o.w,o.h);
+});
+
+
+ctx.fillStyle="#3cb371";
+ctx.fillRect(
+tank.x - tank.size/2,
+tank.y - tank.size/2,
+tank.size,
+tank.size
+);
+
+
+ctx.save();
+
+ctx.translate(tank.x,tank.y);
+ctx.rotate(tank.turretAngle);
+
+ctx.fillStyle="#2fd9ff";
+ctx.fillRect(0,-6,42,12);
+
+ctx.restore();
+
+
+ctx.fillStyle="#ffd800";
+bullets.forEach(b=>{
+ctx.fillRect(b.x,b.y,b.size,b.size);
+});
+
+
+drawHotbar();
+
+}
+
+
+
+/* GAME LOOP */
 
 function gameLoop(){
 
