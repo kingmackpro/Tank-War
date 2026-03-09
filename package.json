@@ -1,0 +1,24 @@
+{
+  "name": "tank-war",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000T\u0000a\u0000n\u0000k\u0000-\u0000W\u0000a\u0000r\u0000",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kingmackpro/Tank-War.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kingmackpro/Tank-War/issues"
+  },
+  "homepage": "https://github.com/kingmackpro/Tank-War#readme",
+  "dependencies": {
+    "ws": "^8.19.0"
+  }
+}
