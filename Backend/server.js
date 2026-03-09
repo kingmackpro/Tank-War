@@ -11,7 +11,6 @@ fs.readFileSync("./tanks.json","utf8")
 /* CONSTANTS */
 
 const PORT = 8080;
-
 const TANK_SIZE = 40;
 const BARREL_LENGTH = 30;
 
@@ -147,10 +146,8 @@ if(!player) return;
 /* INPUT */
 
 if(data.type==="input"){
-
 player.keys=data.keys;
 player.turretAngle=data.turretAngle;
-
 }
 
 /* WEAPON SWITCH */
@@ -167,8 +164,6 @@ const weapon = player.tank.weapons[player.weaponSlot];
 if(!weapon) return;
 
 const now = Date.now();
-
-/* COOLDOWN */
 
 if(now - player.lastShotTime < weapon.cooldown) return;
 
@@ -233,9 +228,11 @@ p.y+=dy;
 
 }
 
-/* PROJECTILES */
+/* PROJECTILES (reverse loop to avoid skip bug) */
 
-gameState.projectiles.forEach((b,i)=>{
+for(let i=gameState.projectiles.length-1;i>=0;i--){
+
+const b=gameState.projectiles[i];
 
 b.x+=b.vx;
 b.y+=b.vy;
@@ -246,7 +243,7 @@ const box=rectFromCenter(b.x,b.y,b.size,b.size);
 
 if(mapCollision(box)){
 gameState.projectiles.splice(i,1);
-return;
+continue;
 }
 
 /* PLAYER HIT */
@@ -261,27 +258,63 @@ const tankBox=rectFromCenter(p.x,p.y,TANK_SIZE,TANK_SIZE);
 
 if(intersects(box,tankBox)){
 
-let dmg=b.damage;
+const incomingDamage=b.damage;
+const effectiveDamage=Math.max(0,incomingDamage-p.tank.armor);
 
-/* ARMOR */
+const armorBefore=p.armorHp;
 
-if(p.armorHp>0){
+let armorDamage=0;
+let hpDamage=0;
 
-p.armorHp-=dmg;
+/* CASE 1 — armor blocks completely */
 
-if(p.armorHp<0){
+if(armorBefore>0 && effectiveDamage===0){
 
-dmg=-p.armorHp;
-p.armorHp=0;
-p.hp-=dmg;
+armorDamage=Math.min(incomingDamage,armorBefore);
+
+}
+
+/* CASE 2 — armor + hp */
+
+else if(armorBefore>0){
+
+armorDamage=Math.min(incomingDamage,armorBefore);
+
+hpDamage=effectiveDamage;
+p.hp-=effectiveDamage;
 
 }
 
-}else{
+/* CASE 3 — armor already broken */
 
-p.hp-=dmg;
+else{
+
+hpDamage=incomingDamage;
+p.hp-=incomingDamage;
 
 }
+
+/* durability */
+
+p.armorHp-=incomingDamage;
+
+/* clamp */
+
+if(p.armorHp<0) p.armorHp=0;
+if(p.hp<0) p.hp=0;
+
+/* DAMAGE EVENT */
+
+wss.clients.forEach(c=>{
+if(c.readyState===WebSocket.OPEN){
+c.send(JSON.stringify({
+type:"damage",
+targetId:id,
+armorDamage:armorDamage,
+hpDamage:hpDamage
+}));
+}
+});
 
 /* REMOVE BULLET */
 
@@ -305,7 +338,7 @@ break;
 
 }
 
-});
+}
 
 /* BROADCAST */
 

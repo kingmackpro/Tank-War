@@ -18,6 +18,13 @@ let activeSlot=1;
 
 const rotateSpeed=0.06;
 
+/* VISUAL EFFECTS */
+
+let particles=[];
+let shakeTime=0;
+let shakeX=0;
+let shakeY=0;
+
 /* INPUT */
 
 document.addEventListener("keydown",(e)=>{
@@ -25,21 +32,13 @@ document.addEventListener("keydown",(e)=>{
 keys[e.key.toLowerCase()] = true;
 
 if(e.key>="1" && e.key<="5"){
-
 activeSlot=parseInt(e.key);
-
-socket.send(JSON.stringify({
-type:"weapon_switch",
-slot:activeSlot
-}));
-
+socket.send(JSON.stringify({type:"weapon_switch",slot:activeSlot}));
 }
 
-if(e.key==="ArrowLeft"||e.key==="ArrowRight")
-aimMode="keyboard";
+if(e.key==="ArrowLeft"||e.key==="ArrowRight") aimMode="keyboard";
 
-if(e.key===" ")
-shoot();
+if(e.key===" ") shoot();
 
 });
 
@@ -85,19 +84,38 @@ if(data.type==="init") playerId=data.id;
 if(data.type==="map") map=data.data;
 if(data.type==="state") gameState=data;
 
+/* DAMAGE EVENT */
+
+if(data.type==="damage"){
+
+const p=gameState.players[data.targetId];
+if(!p) return;
+
+if(data.targetId===playerId){
+shakeTime=Date.now()+150;
+}
+
+if(data.armorDamage>0){
+spawnParticles(p.x,p.y,"#4aa3ff");
+}
+
+if(data.hpDamage>0){
+spawnParticles(p.x,p.y,"#ff3b3b");
+}
+
+}
+
 };
 
-/* SEND INPUT */
+/* INPUT LOOP */
 
 function updateInput(){
 
 if(!playerId) return;
 
 if(aimMode==="keyboard"){
-
 if(keys["arrowleft"]) turretAngle-=rotateSpeed;
 if(keys["arrowright"]) turretAngle+=rotateSpeed;
-
 }
 
 socket.send(JSON.stringify({
@@ -111,7 +129,47 @@ aimMode:aimMode
 
 setInterval(updateInput,1000/60);
 
-/* DRAW MAP */
+/* PARTICLES */
+
+function spawnParticles(x,y,color){
+
+for(let i=0;i<8;i++){
+particles.push({
+x:x,
+y:y,
+vx:(Math.random()-0.5)*4,
+vy:(Math.random()-0.5)*4,
+life:30,
+color:color
+});
+}
+
+}
+
+function updateParticles(){
+
+particles.forEach((p,i)=>{
+p.x+=p.vx;
+p.y+=p.vy;
+p.life--;
+
+if(p.life<=0){
+particles.splice(i,1);
+}
+});
+
+}
+
+function drawParticles(){
+
+particles.forEach(p=>{
+ctx.fillStyle=p.color;
+ctx.fillRect(p.x,p.y,3,3);
+});
+
+}
+
+/* MAP */
 
 function drawMap(){
 
@@ -159,7 +217,7 @@ const spacing=10;
 const total=slots*size+(slots-1)*spacing;
 const start=canvas.width/2-total/2;
 
-const y = canvas.height - size - 10;
+const y=canvas.height-size-10;
 
 for(let i=1;i<=slots;i++){
 
@@ -195,7 +253,17 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 
 drawMap();
 
-/* tanks */
+/* SHAKE */
+
+if(Date.now()<shakeTime){
+shakeX=(Math.random()*6)-3;
+shakeY=(Math.random()*6)-3;
+}else{
+shakeX=0;
+shakeY=0;
+}
+
+/* TANKS */
 
 for(const id in gameState.players){
 
@@ -203,7 +271,12 @@ const p=gameState.players[id];
 
 ctx.fillStyle=id===playerId?"#3cb371":"#ff4444";
 
-ctx.fillRect(p.x-TANK_HALF,p.y-TANK_HALF,TANK_SIZE,TANK_SIZE);
+ctx.fillRect(
+p.x-TANK_HALF+shakeX,
+p.y-TANK_HALF+shakeY,
+TANK_SIZE,
+TANK_SIZE
+);
 
 ctx.save();
 
@@ -217,7 +290,7 @@ ctx.restore();
 
 }
 
-/* bullets */
+/* BULLETS */
 
 ctx.fillStyle="#ffd800";
 
@@ -230,6 +303,7 @@ b.size
 );
 });
 
+drawParticles();
 drawHotbar();
 drawHUD();
 
@@ -237,6 +311,7 @@ drawHUD();
 
 function loop(){
 
+updateParticles();
 draw();
 requestAnimationFrame(loop);
 

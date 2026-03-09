@@ -9,7 +9,7 @@
     "weapons": [
       {
         "name": "Basic Gun",
-        "damage": 20,
+        "damage": 15,
         "cooldown": 200,
         "projectileSpeed": 8,
         "projectileSize": 6
