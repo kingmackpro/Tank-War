@@ -128,6 +128,26 @@ map.covers.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
 
 }
 
+/* HUD */
+
+function drawHUD(){
+
+const p=gameState.players[playerId];
+if(!p) return;
+
+const weapon=p.tank.weapons[p.weaponSlot];
+
+ctx.fillStyle="white";
+ctx.font="16px monospace";
+
+ctx.fillText("HP: "+p.hp,10,20);
+ctx.fillText("Armor: "+p.armorHp,10,40);
+ctx.fillText("Energy: "+p.tank.energy,10,60);
+ctx.fillText("Speed: "+p.tank.speed,10,80);
+ctx.fillText("Weapon: "+weapon.name,10,100);
+
+}
+
 /* HOTBAR */
 
 function drawHotbar(){
@@ -202,10 +222,16 @@ ctx.restore();
 ctx.fillStyle="#ffd800";
 
 gameState.projectiles.forEach(b=>{
-ctx.fillRect(b.x-3,b.y-3,6,6);
+ctx.fillRect(
+b.x-b.size/2,
+b.y-b.size/2,
+b.size,
+b.size
+);
 });
 
 drawHotbar();
+drawHUD();
 
 }
 

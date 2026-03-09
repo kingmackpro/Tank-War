@@ -2,18 +2,18 @@ const http = require("http");
 const fs = require("fs");
 const WebSocket = require("ws");
 
+/* LOAD TANK CONFIG */
+
+const tanks = JSON.parse(
+fs.readFileSync("./tanks.json","utf8")
+);
+
 /* CONSTANTS */
 
 const PORT = 8080;
 
 const TANK_SIZE = 40;
-const TANK_HALF = TANK_SIZE / 2;
-const BULLET_SIZE = 6;
-const BULLET_HALF = BULLET_SIZE / 2;
 const BARREL_LENGTH = 30;
-
-const PLAYER_SPEED = 3;
-const BULLET_SPEED = 8;
 
 /* MAP */
 
@@ -42,35 +42,24 @@ players:{},
 projectiles:[]
 };
 
-/* PHYSICS HELPERS */
-
-function rect(x,y,w,h){
-return {x,y,w,h};
-}
+/* PHYSICS */
 
 function rectFromCenter(cx,cy,w,h){
-return {
-x:cx-w/2,
-y:cy-h/2,
-w,
-h
-};
+return {x:cx-w/2,y:cy-h/2,w,h};
 }
 
 function intersects(a,b){
-
 return (
 a.x < b.x + b.w &&
 a.x + a.w > b.x &&
 a.y < b.y + b.h &&
 a.y + a.h > b.y
 );
-
 }
 
 function mapCollision(box){
 
-const objects = [...map.walls,...map.stones,...map.covers];
+const objects=[...map.walls,...map.stones,...map.covers];
 
 for(const o of objects){
 if(intersects(box,o)) return true;
@@ -82,12 +71,12 @@ return false;
 
 /* HTTP SERVER */
 
-const server = http.createServer((req,res)=>{
+const server=http.createServer((req,res)=>{
 
-let file = "./";
+let file="./";
 
-if(req.url === "/") file += "index.html";
-else file += req.url;
+if(req.url==="/") file+="../index.html";
+else file+="../"+req.url;
 
 fs.readFile(file,(err,data)=>{
 
@@ -113,58 +102,90 @@ server.listen(PORT,()=>console.log("Server running on 8080"));
 
 /* WEBSOCKET */
 
-const wss = new WebSocket.Server({server});
+const wss=new WebSocket.Server({server});
 
-wss.on("connection",(ws)=>{
+/* CREATE PLAYER */
 
-const id = Math.random().toString(36).substring(2,9);
+function createPlayer(id){
 
-gameState.players[id] = {
+const tank = JSON.parse(JSON.stringify(tanks.defaultTank));
+
+gameState.players[id]={
+
 x:450,
 y:300,
 turretAngle:0,
 keys:{},
-weaponSlot:1
+
+tank:tank,
+
+hp:tank.hp,
+armorHp:tank.armorHp,
+
+weaponSlot:0,
+lastShotTime:0
+
 };
+
+}
+
+wss.on("connection",(ws)=>{
+
+const id=Math.random().toString(36).substring(2,9);
+
+createPlayer(id);
 
 ws.send(JSON.stringify({type:"init",id}));
 ws.send(JSON.stringify({type:"map",data:map}));
 
 ws.on("message",(msg)=>{
 
-const data = JSON.parse(msg);
-const player = gameState.players[id];
+const data=JSON.parse(msg);
+const player=gameState.players[id];
 if(!player) return;
 
-if(data.type === "input"){
+/* INPUT */
 
-player.keys = data.keys;
-player.turretAngle = data.turretAngle;
+if(data.type==="input"){
+
+player.keys=data.keys;
+player.turretAngle=data.turretAngle;
 
 }
 
-if(data.type === "weapon_switch"){
-player.weaponSlot = data.slot;
+/* WEAPON SWITCH */
+
+if(data.type==="weapon_switch"){
+player.weaponSlot=data.slot;
 }
 
-if(data.type === "shoot"){
+/* SHOOT */
 
-if(player.weaponSlot !== 1) return;
+if(data.type==="shoot"){
 
-const spawnX =
-player.x + Math.cos(player.turretAngle) * BARREL_LENGTH;
+const weapon = player.tank.weapons[player.weaponSlot];
+if(!weapon) return;
 
-const spawnY =
-player.y + Math.sin(player.turretAngle) * BARREL_LENGTH;
+const now = Date.now();
+
+/* COOLDOWN */
+
+if(now - player.lastShotTime < weapon.cooldown) return;
+
+player.lastShotTime = now;
 
 gameState.projectiles.push({
 
-x:spawnX,
-y:spawnY,
-vx:Math.cos(player.turretAngle) * BULLET_SPEED,
-vy:Math.sin(player.turretAngle) * BULLET_SPEED,
-size:BULLET_SIZE,
-owner:id
+x:player.x+Math.cos(player.turretAngle)*BARREL_LENGTH,
+y:player.y+Math.sin(player.turretAngle)*BARREL_LENGTH,
+
+vx:Math.cos(player.turretAngle)*weapon.projectileSpeed,
+vy:Math.sin(player.turretAngle)*weapon.projectileSpeed,
+
+size:weapon.projectileSize,
+damage:weapon.damage,
+
+ownerId:id
 
 });
 
@@ -182,30 +203,32 @@ delete gameState.players[id];
 
 function updateGame(){
 
-/* PLAYERS */
+/* PLAYER MOVEMENT */
 
 for(const id in gameState.players){
 
-const p = gameState.players[id];
+const p=gameState.players[id];
+
+const SPEED=p.tank.speed;
 
 let dx=0;
 let dy=0;
 
-if(p.keys.w) dy-=PLAYER_SPEED;
-if(p.keys.s) dy+=PLAYER_SPEED;
-if(p.keys.a) dx-=PLAYER_SPEED;
-if(p.keys.d) dx+=PLAYER_SPEED;
+if(p.keys.w) dy-=SPEED;
+if(p.keys.s) dy+=SPEED;
+if(p.keys.a) dx-=SPEED;
+if(p.keys.d) dx+=SPEED;
 
-const nextBox = rectFromCenter(
-p.x + dx,
-p.y + dy,
+const nextBox=rectFromCenter(
+p.x+dx,
+p.y+dy,
 TANK_SIZE,
 TANK_SIZE
 );
 
 if(!mapCollision(nextBox)){
-p.x += dx;
-p.y += dy;
+p.x+=dx;
+p.y+=dy;
 }
 
 }
@@ -214,32 +237,86 @@ p.y += dy;
 
 gameState.projectiles.forEach((b,i)=>{
 
-b.x += b.vx;
-b.y += b.vy;
+b.x+=b.vx;
+b.y+=b.vy;
 
-const box = rectFromCenter(
-b.x,
-b.y,
-BULLET_SIZE,
-BULLET_SIZE
-);
+const box=rectFromCenter(b.x,b.y,b.size,b.size);
+
+/* MAP HIT */
 
 if(mapCollision(box)){
 gameState.projectiles.splice(i,1);
+return;
+}
+
+/* PLAYER HIT */
+
+for(const id in gameState.players){
+
+const p=gameState.players[id];
+
+if(id===b.ownerId) continue;
+
+const tankBox=rectFromCenter(p.x,p.y,TANK_SIZE,TANK_SIZE);
+
+if(intersects(box,tankBox)){
+
+let dmg=b.damage;
+
+/* ARMOR */
+
+if(p.armorHp>0){
+
+p.armorHp-=dmg;
+
+if(p.armorHp<0){
+
+dmg=-p.armorHp;
+p.armorHp=0;
+p.hp-=dmg;
+
+}
+
+}else{
+
+p.hp-=dmg;
+
+}
+
+/* REMOVE BULLET */
+
+gameState.projectiles.splice(i,1);
+
+/* RESPAWN */
+
+if(p.hp<=0){
+
+p.x=450;
+p.y=300;
+
+p.hp=p.tank.hp;
+p.armorHp=p.tank.armorHp;
+
+}
+
+break;
+
+}
+
 }
 
 });
 
 /* BROADCAST */
 
-const packet = JSON.stringify({
+const packet=JSON.stringify({
 type:"state",
 players:gameState.players,
 projectiles:gameState.projectiles
 });
 
 wss.clients.forEach(c=>{
-if(c.readyState === WebSocket.OPEN)
+if(c.readyState===WebSocket.OPEN)
 c.send(packet);
 });
 

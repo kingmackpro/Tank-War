@@ -1,0 +1,19 @@
+{
+  "defaultTank": {
+    "hp": 100,
+    "armor": 10,
+    "armorHp": 50,
+    "energy": 100,
+    "speed": 3,
+    "type": "basic",
+    "weapons": [
+      {
+        "name": "Basic Gun",
+        "damage": 20,
+        "cooldown": 200,
+        "projectileSpeed": 8,
+        "projectileSize": 6
+      }
+    ]
+  }
+}
