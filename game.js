@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const SERVER_URL = "wss://discs-apr-different-buzz.trycloudflare.com";
+const SERVER_URL = "wss://unix-independently-granted-phi.trycloudflare.com";
 
 let socket;
 
