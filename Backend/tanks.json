@@ -20,6 +20,13 @@
         "cooldown": 80,
         "projectileSpeed": 12,
         "projectileSize": 4
+      },
+      {
+        "name": "Heavy Gun",
+        "damage": 30,
+        "cooldown": 400,
+        "projectileSpeed": 4,
+        "projectileSize": 10
       }
     ]
   }

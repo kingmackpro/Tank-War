@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const socket = new WebSocket("wss://glossary-poly-televisions-approved.trycloudflare.com");
+const socket = new WebSocket("wss://discs-apr-different-buzz.trycloudflare.com");
 
 const TANK_SIZE = 40;
 const TANK_HALF = 20;
@@ -21,6 +21,8 @@ const rotateSpeed = 0.06;
 /* VISUAL EFFECTS */
 
 let particles = [];
+let damageTexts = [];
+
 let shakeTime = 0;
 let shakeX = 0;
 let shakeY = 0;
@@ -108,15 +110,21 @@ const p = gameState.players[data.targetId];
 if(!p) return;
 
 if(data.targetId === playerId){
-shakeTime = Date.now() + 150;
+shakeTime = Date.now()+150;
 }
 
 if(data.armorDamage>0){
+
 spawnParticles(p.x,p.y,"#4aa3ff");
+spawnDamageText(p.x,p.y-20,data.armorDamage,"#4aa3ff");
+
 }
 
 if(data.hpDamage>0){
+
 spawnParticles(p.x,p.y,"#ff3b3b");
+spawnDamageText(p.x,p.y-35,data.hpDamage,"#ff3b3b");
+
 }
 
 }
@@ -195,6 +203,56 @@ ctx.fillRect(p.x,p.y,3,3);
 
 }
 
+/* DAMAGE NUMBERS */
+
+function spawnDamageText(x,y,value,color){
+
+damageTexts.push({
+x:x,
+y:y,
+vy:-0.5,
+life:60,
+text:value,
+color:color
+});
+
+}
+
+function updateDamageTexts(){
+
+for(let i=damageTexts.length-1;i>=0;i--){
+
+const d = damageTexts[i];
+
+d.y += d.vy;
+d.life--;
+
+if(d.life<=0){
+damageTexts.splice(i,1);
+}
+
+}
+
+}
+
+function drawDamageTexts(){
+
+ctx.font="14px monospace";
+
+damageTexts.forEach(d=>{
+
+ctx.fillStyle=d.color;
+
+ctx.fillText(
+d.text,
+d.x,
+d.y
+);
+
+});
+
+}
+
 /* MAP */
 
 function drawMap(){
@@ -257,7 +315,6 @@ const y = canvas.height-size-10;
 for(let i=0;i<slots;i++){
 
 const x = start + i*(size+spacing);
-
 const weapon = weapons[i] || null;
 
 ctx.fillStyle = (i+1===activeSlot) ? "#aaa" : "#555";
@@ -270,17 +327,29 @@ ctx.fillStyle="#000";
 ctx.font="18px monospace";
 ctx.fillText(i+1,x+24,y+34);
 
-/* show weapon indicator */
+/* weapon icon */
 
 if(weapon){
 
 ctx.fillStyle="#ffd800";
+ctx.fillRect(x + size/2 - 4, y + 12, 8, 26);
+
+/* cooldown bar */
+
+const lastShot = p.lastShotTime || 0;
+const cooldown = weapon.cooldown;
+
+const elapsed = Date.now() - lastShot;
+
+let ratio = Math.min(elapsed/cooldown,1);
+
+ctx.fillStyle="#00ff88";
 
 ctx.fillRect(
-x + size/2 - 4,
-y + 12,
-8,
-26
+x,
+y+size-6,
+size*ratio,
+4
 );
 
 }
@@ -325,6 +394,36 @@ TANK_SIZE,
 TANK_SIZE
 );
 
+/* ARMOR + HP BAR */
+
+const barWidth = 40;
+const barHeight = 4;
+
+const armorPercent = p.armorHp / p.tank.armorHp;
+const hpPercent = p.hp / p.tank.hp;
+
+/* place bar BELOW tank */
+
+const barX = p.x - barWidth/2;
+const barY = p.y + TANK_HALF + 6;
+
+/* background */
+
+ctx.fillStyle = "#000";
+ctx.fillRect(barX, barY, barWidth, 10);
+
+/* armor bar */
+
+ctx.fillStyle = "#4aa3ff";
+ctx.fillRect(barX, barY, barWidth * armorPercent, barHeight);
+
+/* hp bar */
+
+ctx.fillStyle = "#ff3b3b";
+ctx.fillRect(barX, barY + 6, barWidth * hpPercent, barHeight);
+
+/* turret */
+
 ctx.save();
 
 ctx.translate(p.x,p.y);
@@ -351,6 +450,7 @@ b.size
 });
 
 drawParticles();
+drawDamageTexts();
 drawHotbar();
 drawHUD();
 
@@ -359,7 +459,10 @@ drawHUD();
 function loop(){
 
 updateParticles();
+updateDamageTexts();
+
 draw();
+
 requestAnimationFrame(loop);
 
 }
