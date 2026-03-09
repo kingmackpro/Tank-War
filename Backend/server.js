@@ -25,25 +25,23 @@ covers: [
 ]
 };
 
-
 /* ---------------- GAME STATE ---------------- */
 
 const gameState = {
-players: {},
-bullets: []
+players:{},
+projectiles:[]
 };
-
 
 /* ---------------- HTTP SERVER ---------------- */
 
 const server = http.createServer((req,res)=>{
 
-let filePath = "./";
+let filePath="./";
 
-if(req.url === "/") filePath += "index.html";
-else filePath += req.url;
+if(req.url==="/") filePath+="index.html";
+else filePath+=req.url;
 
-const ext = path.extname(filePath);
+const ext=path.extname(filePath);
 
 let type="text/plain";
 if(ext==".html") type="text/html";
@@ -64,25 +62,13 @@ res.end(data);
 
 });
 
-server.listen(PORT,()=>{
-console.log("Server running http://localhost:8080");
-});
-
+server.listen(PORT,()=>console.log("Server running http://localhost:8080"));
 
 /* ---------------- WEBSOCKET ---------------- */
 
-const wss = new WebSocket.Server({server});
+const wss=new WebSocket.Server({server});
 
-function createPlayer(id){
-
-gameState.players[id] = {
-x:450,
-y:300,
-turretAngle:0,
-keys:{}
-};
-
-}
+/* ---------------- UTILS ---------------- */
 
 function rectCollision(a,b){
 
@@ -93,32 +79,79 @@ a.y + a.h > b.y;
 
 }
 
+function createPlayer(id){
+
+gameState.players[id]={
+x:450,
+y:300,
+turretAngle:0,
+aimMode:"mouse",
+keys:{},
+weaponSlot:1
+};
+
+}
+
+/* ---------------- CONNECTION ---------------- */
+
 wss.on("connection",(ws)=>{
 
-const id = Math.random().toString(36).substring(2,9);
+const id=Math.random().toString(36).substring(2,9);
 
 createPlayer(id);
 
 console.log("Client connected:",id);
 
+/* send player id */
+ws.send(JSON.stringify({type:"init",id}));
+
+/* send map */
 ws.send(JSON.stringify({
-type:"init",
-id:id,
-map:map
+type:"map",
+data:map
 }));
 
 ws.on("message",(msg)=>{
 
-const data = JSON.parse(msg);
+const data=JSON.parse(msg);
 
-if(data.type === "input"){
-
-const player = gameState.players[id];
-
+const player=gameState.players[id];
 if(!player) return;
 
-player.keys = data.keys;
-player.turretAngle = data.turretAngle;
+/* PLAYER INPUT */
+
+if(data.type==="input"){
+
+player.keys=data.keys;
+player.turretAngle=data.turretAngle;
+player.aimMode=data.aimMode;
+
+}
+
+/* SHOOT */
+
+if(data.type==="shoot"){
+
+const speed=8;
+
+gameState.projectiles.push({
+
+x:player.x,
+y:player.y,
+vx:Math.cos(player.turretAngle)*speed,
+vy:Math.sin(player.turretAngle)*speed,
+size:6,
+ownerId:id
+
+});
+
+}
+
+/* WEAPON SWITCH */
+
+if(data.type==="weapon_switch"){
+
+player.weaponSlot=data.slot;
 
 }
 
@@ -133,16 +166,15 @@ console.log("Player disconnected:",id);
 
 });
 
-
 /* ---------------- GAME LOOP ---------------- */
 
-const SPEED = 3;
+const SPEED=3;
 
 function updateGame(){
 
 for(const id in gameState.players){
 
-const p = gameState.players[id];
+const p=gameState.players[id];
 
 let dx=0;
 let dy=0;
@@ -152,23 +184,57 @@ if(p.keys.s) dy+=SPEED;
 if(p.keys.a) dx-=SPEED;
 if(p.keys.d) dx+=SPEED;
 
-p.x += dx;
-p.y += dy;
+const next={
+x:p.x+dx,
+y:p.y+dy,
+w:40,
+h:40
+};
 
-}
+let blocked=false;
 
-/* broadcast state */
-
-const packet = JSON.stringify({
-type:"state",
-players:gameState.players,
-bullets:gameState.bullets
+[...map.walls,...map.stones,...map.covers].forEach(o=>{
+if(rectCollision(next,o)) blocked=true;
 });
 
-wss.clients.forEach(client=>{
-if(client.readyState === WebSocket.OPEN){
-client.send(packet);
+if(!blocked){
+p.x+=dx;
+p.y+=dy;
 }
+
+}
+
+/* PROJECTILES */
+
+gameState.projectiles.forEach((b,i)=>{
+
+b.x+=b.vx;
+b.y+=b.vy;
+
+const rect={x:b.x,y:b.y,w:b.size,h:b.size};
+
+let hit=false;
+
+[...map.walls,...map.stones].forEach(o=>{
+if(rectCollision(rect,o)) hit=true;
+});
+
+if(hit){
+gameState.projectiles.splice(i,1);
+}
+
+});
+
+/* BROADCAST STATE */
+
+const packet=JSON.stringify({
+type:"state",
+players:gameState.players,
+projectiles:gameState.projectiles
+});
+
+wss.clients.forEach(c=>{
+if(c.readyState===WebSocket.OPEN) c.send(packet);
 });
 
 }
