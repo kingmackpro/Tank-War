@@ -126,7 +126,10 @@ hp:tank.hp,
 armorHp:tank.armorHp,
 
 weaponSlot:0,
-lastShotTime:0
+
+/* cooldown per slot */
+
+lastShotTime:[0,0,0,0,0]
 
 };
 
@@ -138,8 +141,6 @@ wss.on("connection",(ws)=>{
 
 let player=null;
 let playerId=null;
-
-/* MESSAGE */
 
 ws.on("message",(msg)=>{
 
@@ -159,9 +160,7 @@ player=sessions[sessionId];
 }else{
 
 playerId=Math.random().toString(36).substring(2,9);
-
 player=createPlayer();
-
 sessions[playerId]=player;
 
 }
@@ -169,7 +168,6 @@ sessions[playerId]=player;
 gameState.players[playerId]=player;
 
 ws.send(JSON.stringify({type:"session",sessionId:playerId}));
-
 ws.send(JSON.stringify({type:"init",id:playerId}));
 ws.send(JSON.stringify({type:"map",data:map}));
 
@@ -192,11 +190,9 @@ if(data.type==="weapon_switch"){
 const slot=Number(data.slot);
 const index=slot-1;
 
-if(
-Number.isInteger(index) &&
-index>=0 &&
-index<player.tank.weapons.length
-){
+/* allow empty slot but clamp safely */
+
+if(Number.isInteger(index) && index>=0 && index<5){
 player.weaponSlot=index;
 }
 
@@ -206,15 +202,29 @@ player.weaponSlot=index;
 
 if(data.type==="shoot"){
 
-const weapon=player.tank.weapons[player.weaponSlot];
+const slot = player.weaponSlot;
+
+/* get weapon safely */
+
+const weapon = player.tank.weapons[slot] || null;
+
+/* empty slot cannot fire */
 
 if(!weapon) return;
 
 const now=Date.now();
 
-if(now-player.lastShotTime<weapon.cooldown) return;
+/* cooldown per slot */
 
-player.lastShotTime=now;
+const lastShot=player.lastShotTime[slot] || 0;
+
+if(now-lastShot < weapon.cooldown) return;
+
+/* update cooldown */
+
+player.lastShotTime[slot]=now;
+
+/* spawn projectile */
 
 gameState.projectiles.push({
 
@@ -238,9 +248,7 @@ ownerId:playerId
 /* DISCONNECT */
 
 ws.on("close",()=>{
-
 delete gameState.players[playerId];
-
 });
 
 });
@@ -316,16 +324,11 @@ const armorBefore=p.armorHp;
 let armorDamage=0;
 let hpDamage=0;
 
-/* armor blocks */
-
 if(armorBefore>0 && effectiveDamage===0){
 
 armorDamage=Math.min(incomingDamage,armorBefore);
 
 }
-
-/* armor + hp */
-
 else if(armorBefore>0){
 
 armorDamage=Math.min(incomingDamage,armorBefore);
@@ -334,9 +337,6 @@ hpDamage=effectiveDamage;
 p.hp-=effectiveDamage;
 
 }
-
-/* armor gone */
-
 else{
 
 hpDamage=incomingDamage;
@@ -344,11 +344,7 @@ p.hp-=incomingDamage;
 
 }
 
-/* durability */
-
 p.armorHp-=incomingDamage;
-
-/* clamp */
 
 if(p.armorHp<0) p.armorHp=0;
 if(p.hp<0) p.hp=0;

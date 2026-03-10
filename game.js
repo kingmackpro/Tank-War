@@ -1,23 +1,19 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const SERVER_URL = "wss://assumption-delivered-devoted-perception.trycloudflare.com";
+/* SERVER URL */
+const SERVER_URL = "wss://abc-craft-costa-copyright.trycloudflare.com";
 
 let socket;
-
-/* SESSION */
-
 let sessionId = localStorage.getItem("tankSession");
 
-/* CONNECTION */
+/* CONNECT */
 
 function connect(){
 
 socket = new WebSocket(SERVER_URL);
 
 socket.onopen = () => {
-
-console.log("Connected");
 
 socket.send(JSON.stringify({
 type:"session",
@@ -30,8 +26,7 @@ socket.onmessage = handleServerMessage;
 
 socket.onclose = () => {
 
-console.log("Disconnected, reconnecting...");
-
+console.log("Disconnected. Reconnecting...");
 setTimeout(connect,2000);
 
 };
@@ -42,7 +37,7 @@ socket.onerror = () => socket.close();
 
 connect();
 
-/* GAME STATE */
+/* CONSTANTS */
 
 const TANK_SIZE = 40;
 const TANK_HALF = 20;
@@ -50,7 +45,9 @@ const TANK_HALF = 20;
 let playerId = null;
 let map = null;
 
-let gameState = { players:{}, projectiles:[] };
+let gameState = {players:{},projectiles:[]};
+
+let lastServerTime = 0;
 
 const keys = {};
 
@@ -59,8 +56,6 @@ let aimMode = "mouse";
 let activeSlot = 1;
 
 const rotateSpeed = 0.06;
-
-let lastServerTime = 0;
 
 /* VISUAL EFFECTS */
 
@@ -85,18 +80,20 @@ document.addEventListener("keydown",(e)=>{
 
 keys[e.key.toLowerCase()] = true;
 
+/* HOTBAR SWITCH */
+
 if(e.key>="1" && e.key<="5"){
 
-const newSlot = parseInt(e.key);
+const slot = parseInt(e.key);
 
-if(newSlot !== activeSlot){
+if(slot !== activeSlot){
 
-activeSlot = newSlot;
+activeSlot = slot;
 
-if(socket.readyState === WebSocket.OPEN){
+if(socket.readyState===WebSocket.OPEN){
 socket.send(JSON.stringify({
 type:"weapon_switch",
-slot:newSlot
+slot:slot
 }));
 }
 
@@ -120,23 +117,36 @@ canvas.addEventListener("mousemove",(e)=>{
 
 const rect = canvas.getBoundingClientRect();
 
-const mx = e.clientX - rect.left;
-const my = e.clientY - rect.top;
+const mx = e.clientX-rect.left;
+const my = e.clientY-rect.top;
 
 const p = gameState.players[playerId];
 if(!p) return;
 
+/* turret always rotates */
+
 turretAngle = Math.atan2(my-p.y,mx-p.x);
 
-aimMode = "mouse";
+aimMode="mouse";
 
 });
 
-canvas.addEventListener("mousedown",shoot);
+/* SHOOT */
 
 function shoot(){
 
-if(socket.readyState !== WebSocket.OPEN) return;
+const p = gameState.players[playerId];
+if(!p) return;
+
+/* check active slot weapon */
+
+const weapon = p.tank.weapons[activeSlot-1] || null;
+
+/* empty slot = no firing */
+
+if(!weapon) return;
+
+if(socket.readyState!==WebSocket.OPEN) return;
 
 socket.send(JSON.stringify({type:"shoot"}));
 
@@ -153,32 +163,28 @@ const data = JSON.parse(event.data);
 if(data.type==="session"){
 
 sessionId = data.sessionId;
-
 localStorage.setItem("tankSession",sessionId);
 
 }
 
-/* INIT */
+if(data.type==="init") playerId=data.id;
 
-if(data.type==="init") playerId = data.id;
+if(data.type==="map") map=data.data;
 
-/* MAP */
-
-if(data.type==="map") map = data.data;
-
-/* STATE WITH TIMESTAMP */
+/* STATE SNAP */
 
 if(data.type==="state"){
 
-if(data.time < lastServerTime) return;
+if(data.time <= lastServerTime) return;
 
 lastServerTime = data.time;
 
-gameState = data;
+gameState.players = data.players;
+gameState.projectiles = data.projectiles;
 
 }
 
-/* DAMAGE */
+/* DAMAGE EVENT */
 
 if(data.type==="damage"){
 
@@ -187,7 +193,7 @@ if(!tabActive) return;
 const p = gameState.players[data.targetId];
 if(!p) return;
 
-if(data.targetId === playerId){
+if(data.targetId===playerId){
 shakeTime = Date.now()+150;
 }
 
@@ -207,31 +213,34 @@ spawnDamageText(p.x,p.y-35,data.hpDamage,"#ff3b3b");
 
 /* INPUT LOOP */
 
+let lastInput="";
+
 function updateInput(){
 
 if(!playerId) return;
+if(!tabActive) return;
 
 if(aimMode==="keyboard"){
 
-if(keys["arrowleft"]) turretAngle -= rotateSpeed;
-if(keys["arrowright"]) turretAngle += rotateSpeed;
+if(keys["arrowleft"]) turretAngle-=rotateSpeed;
+if(keys["arrowright"]) turretAngle+=rotateSpeed;
 
 }
 
-if(socket.readyState === WebSocket.OPEN){
-
-socket.send(JSON.stringify({
+const payload = JSON.stringify({
 type:"input",
 keys:keys,
-turretAngle:turretAngle,
-aimMode:aimMode
-}));
+turretAngle:turretAngle
+});
+
+if(payload!==lastInput && socket.readyState===WebSocket.OPEN){
+
+socket.send(payload);
+lastInput=payload;
 
 }
 
 }
-
-/* 30Hz input (stable networking) */
 
 setInterval(updateInput,1000/30);
 
@@ -240,6 +249,7 @@ setInterval(updateInput,1000/30);
 function spawnParticles(x,y,color){
 
 for(let i=0;i<8;i++){
+
 particles.push({
 x:x,
 y:y,
@@ -248,6 +258,7 @@ vy:(Math.random()-0.5)*4,
 life:30,
 color:color
 });
+
 }
 
 }
@@ -256,15 +267,13 @@ function updateParticles(){
 
 for(let i=particles.length-1;i>=0;i--){
 
-const p = particles[i];
+const p=particles[i];
 
-p.x += p.vx;
-p.y += p.vy;
+p.x+=p.vx;
+p.y+=p.vy;
 p.life--;
 
-if(p.life<=0){
-particles.splice(i,1);
-}
+if(p.life<=0) particles.splice(i,1);
 
 }
 
@@ -273,13 +282,13 @@ particles.splice(i,1);
 function drawParticles(){
 
 particles.forEach(p=>{
-ctx.fillStyle = p.color;
+ctx.fillStyle=p.color;
 ctx.fillRect(p.x,p.y,3,3);
 });
 
 }
 
-/* DAMAGE NUMBERS */
+/* DAMAGE TEXT */
 
 function spawnDamageText(x,y,value,color){
 
@@ -298,14 +307,12 @@ function updateDamageTexts(){
 
 for(let i=damageTexts.length-1;i>=0;i--){
 
-const d = damageTexts[i];
+const d=damageTexts[i];
 
-d.y += d.vy;
+d.y+=d.vy;
 d.life--;
 
-if(d.life<=0){
-damageTexts.splice(i,1);
-}
+if(d.life<=0) damageTexts.splice(i,1);
 
 }
 
@@ -343,10 +350,10 @@ map.covers.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
 
 function drawHUD(){
 
-const p = gameState.players[playerId];
+const p=gameState.players[playerId];
 if(!p) return;
 
-const weapon = p.tank.weapons[p.weaponSlot] || null;
+const weapon=p.tank.weapons[activeSlot-1]||null;
 
 ctx.fillStyle="white";
 ctx.font="16px monospace";
@@ -356,10 +363,7 @@ ctx.fillText("Armor: "+p.armorHp,10,40);
 ctx.fillText("Energy: "+p.tank.energy,10,60);
 ctx.fillText("Speed: "+p.tank.speed,10,80);
 
-ctx.fillText(
-"Weapon: "+(weapon ? weapon.name : "Empty"),
-10,100
-);
+ctx.fillText("Weapon: "+(weapon?weapon.name:"Empty"),10,100);
 
 }
 
@@ -367,26 +371,26 @@ ctx.fillText(
 
 function drawHotbar(){
 
-const p = gameState.players[playerId];
+const p=gameState.players[playerId];
 if(!p) return;
 
-const weapons = p.tank.weapons;
+const weapons=p.tank.weapons;
 
-const slots = 5;
-const size = 60;
-const spacing = 10;
+const slots=5;
+const size=60;
+const spacing=10;
 
-const total = slots*size+(slots-1)*spacing;
-const start = canvas.width/2-total/2;
+const total=slots*size+(slots-1)*spacing;
+const start=canvas.width/2-total/2;
 
-const y = canvas.height-size-10;
+const y=canvas.height-size-10;
 
 for(let i=0;i<slots;i++){
 
-const x = start + i*(size+spacing);
-const weapon = weapons[i] || null;
+const x=start+i*(size+spacing);
+const weapon=weapons[i]||null;
 
-ctx.fillStyle = (i+1===activeSlot) ? "#aaa" : "#555";
+ctx.fillStyle=(i+1===activeSlot)?"#aaa":"#555";
 ctx.fillRect(x,y,size,size);
 
 ctx.strokeStyle="#222";
@@ -398,23 +402,32 @@ ctx.fillText(i+1,x+24,y+34);
 
 if(weapon){
 
-ctx.fillStyle="#ffd800";
-ctx.fillRect(x + size/2 - 4, y + 12, 8, 26);
+/* weapon icon */
 
-const lastShot = p.lastShotTime || 0;
-const cooldown = weapon.cooldown;
+ctx.fillStyle="#ffd800";
+ctx.fillRect(x+size/2-4,y+12,8,26);
+
+/* RELOAD BAR */
+
+const lastShot = p.lastShotTime ? p.lastShotTime[i] : 0;
 
 const elapsed = Date.now() - lastShot;
 
-let ratio = Math.min(elapsed/cooldown,1);
+const ratio = Math.min(elapsed / weapon.cooldown, 1);
+
+/* background bar */
+
+ctx.fillStyle="#111";
+ctx.fillRect(x, y + size - 6, size, 4);
+
+/* progress */
 
 ctx.fillStyle="#00ff88";
-
 ctx.fillRect(
-x,
-y+size-6,
-size*ratio,
-4
+  x,
+  y + size - 6,
+  size * ratio,
+  4
 );
 
 }
@@ -448,9 +461,9 @@ shakeY=0;
 
 for(const id in gameState.players){
 
-const p = gameState.players[id];
+const p=gameState.players[id];
 
-ctx.fillStyle = id===playerId ? "#3cb371" : "#ff4444";
+ctx.fillStyle=id===playerId?"#3cb371":"#ff4444";
 
 ctx.fillRect(
 p.x-TANK_HALF+shakeX,
@@ -459,16 +472,16 @@ TANK_SIZE,
 TANK_SIZE
 );
 
-/* HP + ARMOR BAR */
+/* BARS */
 
-const barWidth = 40;
-const barHeight = 4;
+const barWidth=40;
+const barHeight=4;
 
-const armorPercent = p.armorHp / p.tank.armorHp;
-const hpPercent = p.hp / p.tank.hp;
+const armorPercent=p.armorHp/p.tank.armorHp;
+const hpPercent=p.hp/p.tank.hp;
 
-const barX = p.x - barWidth/2 + shakeX;
-const barY = p.y + TANK_HALF + 6 + shakeY;
+const barX=p.x-barWidth/2+shakeX;
+const barY=p.y+TANK_HALF+6+shakeY;
 
 ctx.fillStyle="#000";
 ctx.fillRect(barX,barY,barWidth,10);
@@ -479,7 +492,7 @@ ctx.fillRect(barX,barY,barWidth*armorPercent,barHeight);
 ctx.fillStyle="#ff3b3b";
 ctx.fillRect(barX,barY+6,barWidth*hpPercent,barHeight);
 
-/* turret */
+/* TURRET (always visible) */
 
 ctx.save();
 
