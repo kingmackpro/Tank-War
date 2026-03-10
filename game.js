@@ -2,7 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 /* SERVER URL */
-const SERVER_URL = "wss://unfortunately-rover-alliance-manually.trycloudflare.com";
+const SERVER_URL = "wss://subaru-totally-shadow-cheapest.trycloudflare.com";
 
 let socket;
 let sessionId = localStorage.getItem("tankSession");
