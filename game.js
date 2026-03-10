@@ -2,7 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 /* SERVER URL */
-const SERVER_URL = "wss://abc-craft-costa-copyright.trycloudflare.com";
+const SERVER_URL = "wss://abraham-bubble-reply-fiscal.trycloudflare.com";
 
 let socket;
 let sessionId = localStorage.getItem("tankSession");
@@ -130,6 +130,70 @@ turretAngle = Math.atan2(my-p.y,mx-p.x);
 aimMode="mouse";
 
 });
+
+/* FIRE HOLD STATE */
+
+let mouseHeld = false;
+let spaceHeld = false;
+
+/* MOUSE AIM */
+
+canvas.addEventListener("mousemove",(e)=>{
+
+const rect = canvas.getBoundingClientRect();
+
+const mx = e.clientX-rect.left;
+const my = e.clientY-rect.top;
+
+const p = gameState.players[playerId];
+if(!p) return;
+
+/* turret always rotates */
+
+turretAngle = Math.atan2(my-p.y,mx-p.x);
+
+aimMode="mouse";
+
+});
+
+/* MOUSE HOLD */
+
+canvas.addEventListener("mousedown",(e)=>{
+
+if(e.button === 0){
+mouseHeld = true;
+shoot();
+}
+
+});
+
+canvas.addEventListener("mouseup",(e)=>{
+
+if(e.button === 0){
+mouseHeld = false;
+}
+
+});
+
+/* SPACE HOLD TRACK */
+
+document.addEventListener("keydown",(e)=>{
+if(e.code === "Space") spaceHeld = true;
+});
+
+document.addEventListener("keyup",(e)=>{
+if(e.code === "Space") spaceHeld = false;
+});
+
+/* AUTO FIRE LOOP */
+
+setInterval(()=>{
+
+if(!mouseHeld && !spaceHeld) return;
+
+shoot();
+
+},50);
 
 /* SHOOT */
 
