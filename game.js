@@ -111,26 +111,6 @@ document.addEventListener("keyup",(e)=>{
 keys[e.key.toLowerCase()] = false;
 });
 
-/* MOUSE AIM */
-
-canvas.addEventListener("mousemove",(e)=>{
-
-const rect = canvas.getBoundingClientRect();
-
-const mx = e.clientX-rect.left;
-const my = e.clientY-rect.top;
-
-const p = gameState.players[playerId];
-if(!p) return;
-
-/* turret always rotates */
-
-turretAngle = Math.atan2(my-p.y,mx-p.x);
-
-aimMode="mouse";
-
-});
-
 /* FIRE HOLD STATE */
 
 let mouseHeld = false;
@@ -175,6 +155,12 @@ mouseHeld = false;
 
 });
 
+/* RESET IF CURSOR LEAVES CANVAS */
+
+canvas.addEventListener("mouseleave",()=>{
+mouseHeld = false;
+});
+
 /* SPACE HOLD TRACK */
 
 document.addEventListener("keydown",(e)=>{
@@ -183,6 +169,13 @@ if(e.code === "Space") spaceHeld = true;
 
 document.addEventListener("keyup",(e)=>{
 if(e.code === "Space") spaceHeld = false;
+});
+
+/* RESET IF TAB CHANGES OR WINDOW BLURS */
+
+window.addEventListener("blur",()=>{
+mouseHeld = false;
+spaceHeld = false;
 });
 
 /* AUTO FIRE LOOP */
