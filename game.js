@@ -2,7 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 /* SERVER URL */
-const SERVER_URL = "wss://complications-spoke-april-motorcycles.trycloudflare.com";
+const SERVER_URL = "wss://grip-spreading-ordinance-blonde.trycloudflare.com";
 
 let socket;
 let sessionId = localStorage.getItem("tankSession");
@@ -12,8 +12,18 @@ let sessionId = localStorage.getItem("tankSession");
 let cameraX = 0;
 let cameraY = 0;
 
+/* FPS and PING */
+
+let fps = 0;
+let frameCount = 0;
+let lastFpsTime = performance.now();
+
+let lastFrameTime = performance.now();
+let frameMS = 0;
+
 
 /* CONNECT */
+
 
 function connect(){
 
@@ -428,6 +438,10 @@ ctx.fillText("Speed: "+p.tank.speed,10,80);
 
 ctx.fillText("Weapon: "+(weapon?weapon.name:"Empty"),10,100);
 
+ctx.fillText("FPS: "+fps,10,140);
+ctx.fillText("MS: "+frameMS.toFixed(1),10,160);
+
+
 }
 
 /* HOTBAR */
@@ -607,6 +621,19 @@ drawHUD();
 
 function loop(){
 
+const now = performance.now();
+
+frameMS = now - lastFrameTime;
+lastFrameTime = now;
+
+frameCount++;
+
+if(now - lastFpsTime >= 1000){
+fps = frameCount;
+frameCount = 0;
+lastFpsTime = now;
+}
+
 updateParticles();
 updateDamageTexts();
 
@@ -615,5 +642,6 @@ draw();
 requestAnimationFrame(loop);
 
 }
+
 
 loop();
