@@ -20,6 +20,15 @@ const map = JSON.parse(
 fs.readFileSync("./map.json","utf8")
 );
 
+/* AUTO MAP BORDERS */
+
+map.walls.push(
+ {x:0, y:0, w:map.width, h:20},                     // top
+ {x:0, y:map.height-20, w:map.width, h:20},         // bottom
+ {x:0, y:0, w:20, h:map.height},                    // left
+ {x:map.width-20, y:0, w:20, h:map.height}          // right
+);
+
 /* GAME STATE */
 
 const gameState = {
@@ -48,7 +57,11 @@ a.y + a.h > b.y
 
 function mapCollision(box){
 
-const objects=[...map.walls,...map.stones,...map.covers];
+const objects = [
+ ...(map.walls || []),
+ ...(map.stones || []),
+ ...(map.covers || [])
+];
 
 for(const o of objects){
 if(intersects(box,o)) return true;
@@ -109,8 +122,8 @@ return map.spawnPoints[i];
 
 while(true){
 
-const x = Math.random() * map.width;
-const y = Math.random() * map.height;
+const x = 40 + Math.random() * (map.width - 80);
+const y = 40 + Math.random() * (map.height - 80);
 
 const box = rectFromCenter(x,y,TANK_SIZE,TANK_SIZE);
 
@@ -188,7 +201,7 @@ gameState.players[playerId]=player;
 
 ws.send(JSON.stringify({type:"session",sessionId:playerId}));
 ws.send(JSON.stringify({type:"init",id:playerId}));
-ws.send(JSON.stringify({type:"map",data:map}));
+ws.send(JSON.stringify({type:"map",data:map})); 
 
 return;
 }

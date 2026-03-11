@@ -7,6 +7,12 @@ const SERVER_URL = "wss://complications-spoke-april-motorcycles.trycloudflare.co
 let socket;
 let sessionId = localStorage.getItem("tankSession");
 
+/* CAMERA */
+
+let cameraX = 0;
+let cameraY = 0;
+
+
 /* CONNECT */
 
 function connect(){
@@ -122,8 +128,8 @@ canvas.addEventListener("mousemove",(e)=>{
 
 const rect = canvas.getBoundingClientRect();
 
-const mx = e.clientX-rect.left;
-const my = e.clientY-rect.top;
+const mx = e.clientX - rect.left + cameraX;
+const my = e.clientY - rect.top + cameraY;
 
 const p = gameState.players[playerId];
 if(!p) return;
@@ -393,13 +399,13 @@ function drawMap(){
 if(!map) return;
 
 ctx.fillStyle="#444";
-map.walls.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
+map.walls.forEach(o=>ctx.fillRect(o.x - cameraX, o.y - cameraY, o.w, o.h));
 
 ctx.fillStyle="#777";
-map.stones.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
+map.stones.forEach(o=>ctx.fillRect(o.x - cameraX, o.y - cameraY, o.w, o.h));
 
 ctx.fillStyle="#6b4a2d";
-map.covers.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
+map.covers.forEach(o=>ctx.fillRect(o.x - cameraX, o.y - cameraY, o.w, o.h));
 
 }
 
@@ -502,6 +508,20 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 ctx.fillStyle="#242424";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
+const player = gameState.players[playerId];
+
+if(player){
+cameraX = player.x - canvas.width/2;
+cameraY = player.y - canvas.height/2;
+
+/* CAMERA CLAMP */
+
+if(map){
+cameraX = Math.max(0, Math.min(cameraX, map.width - canvas.width));
+cameraY = Math.max(0, Math.min(cameraY, map.height - canvas.height));
+}
+}
+
 drawMap();
 
 /* SHAKE */
@@ -523,8 +543,8 @@ const p=gameState.players[id];
 ctx.fillStyle=id===playerId?"#3cb371":"#ff4444";
 
 ctx.fillRect(
-p.x-TANK_HALF+shakeX,
-p.y-TANK_HALF+shakeY,
+p.x - cameraX - TANK_HALF + shakeX,
+p.y - cameraY - TANK_HALF + shakeY,
 TANK_SIZE,
 TANK_SIZE
 );
@@ -537,8 +557,8 @@ const barHeight=4;
 const armorPercent=p.armorHp/p.tank.armorHp;
 const hpPercent=p.hp/p.tank.hp;
 
-const barX=p.x-barWidth/2+shakeX;
-const barY=p.y+TANK_HALF+6+shakeY;
+const barX=p.x - cameraX - barWidth/2 + shakeX;
+const barY=p.y - cameraY + TANK_HALF + 6 + shakeY;
 
 ctx.fillStyle="#000";
 ctx.fillRect(barX,barY,barWidth,10);
@@ -553,7 +573,7 @@ ctx.fillRect(barX,barY+6,barWidth*hpPercent,barHeight);
 
 ctx.save();
 
-ctx.translate(p.x,p.y);
+ctx.translate(p.x - cameraX, p.y - cameraY);
 ctx.rotate(p.turretAngle);
 
 ctx.fillStyle="#2fd9ff";
@@ -569,8 +589,8 @@ ctx.fillStyle="#ffd800";
 
 gameState.projectiles.forEach(b=>{
 ctx.fillRect(
-b.x-b.size/2,
-b.y-b.size/2,
+b.x - cameraX - b.size/2,
+b.y - cameraY - b.size/2,
 b.size,
 b.size
 );
