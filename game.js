@@ -263,6 +263,30 @@ gameState.projectiles = data.projectiles;
 
 if(data.type==="damage"){
 
+const player = gameState.players[playerId];
+const target = gameState.players[data.targetId];
+
+if(player && target){
+
+const screenX = target.x - cameraX;
+const screenY = target.y - cameraY;
+
+if(
+screenX < 0 || screenX > canvas.width ||
+screenY < 0 || screenY > canvas.height
+){
+
+hitIndicators.push({
+x:target.x,
+y:target.y,
+time:Date.now()+2000
+});
+
+}
+
+}
+
+
 if(!tabActive) return;
 
 const p = gameState.players[data.targetId];
@@ -353,6 +377,53 @@ if(p.life<=0) particles.splice(i,1);
 }
 
 }
+
+function drawHitIndicators(){
+
+const now = Date.now();
+
+for(let i=hitIndicators.length-1;i>=0;i--){
+
+const h = hitIndicators[i];
+
+if(now > h.time){
+hitIndicators.splice(i,1);
+continue;
+}
+
+const player = gameState.players[playerId];
+if(!player) continue;
+
+const dx = h.x - player.x;
+const dy = h.y - player.y;
+
+const angle = Math.atan2(dy,dx);
+
+const dist = Math.min(canvas.width/2-30,Math.hypot(dx,dy));
+
+const x = canvas.width/2 + Math.cos(angle)*dist;
+const y = canvas.height/2 + Math.sin(angle)*dist;
+
+ctx.save();
+
+ctx.translate(x,y);
+ctx.rotate(angle);
+
+ctx.fillStyle="#ff3b3b";
+
+ctx.beginPath();
+ctx.moveTo(0,0);
+ctx.lineTo(-10,-5);
+ctx.lineTo(-10,5);
+ctx.closePath();
+
+ctx.fill();
+
+ctx.restore();
+
+}
+}
+
 
 function drawParticles(){
 
@@ -625,6 +696,7 @@ b.size
 
 drawParticles();
 drawDamageTexts();
+drawHitIndicators();
 drawHotbar();
 drawHUD();
 
