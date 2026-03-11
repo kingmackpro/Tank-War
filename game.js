@@ -440,18 +440,18 @@ if(!player) continue;
 const dx = h.x - player.x;
 const dy = h.y - player.y;
 
-const angle = Math.atan2(dy,dx);
+const angle = Math.atan2(dy, dx);
 
-const dist = Math.min(
-Math.min(canvas.width, canvas.height)/2 - 40,
-Math.hypot(dx,dy)
-);
+/* player screen position */
 
+const playerScreenX = player.x - cameraX;
+const playerScreenY = player.y - cameraY;
 
-const indicatorRadius = 120;
+const indicatorRadius = 120 + Math.sin(Date.now()*0.01)*6;
 
-const x = canvas.width/2 + Math.cos(angle)*indicatorRadius;
-const y = canvas.height/2 + Math.sin(angle)*indicatorRadius;
+const x = playerScreenX + Math.cos(angle) * indicatorRadius;
+const y = playerScreenY + Math.sin(angle) * indicatorRadius;
+
 
 
 ctx.save();
