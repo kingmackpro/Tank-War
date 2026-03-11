@@ -374,15 +374,34 @@ color:color
 
 function updateParticles(){
 
-for(let i=particles.length-1;i>=0;i--){
+for(let i = particles.length - 1; i >= 0; i--){
 
-const p=particles[i];
+const p = particles[i];
 
-p.x+=p.vx;
-p.y+=p.vy;
+/* movement */
+
+p.x += p.vx;
+p.y += p.vy;
 p.life--;
 
-if(p.life<=0) particles.splice(i,1);
+/* remove if expired */
+
+if(p.life <= 0){
+particles.splice(i,1);
+continue;
+}
+
+/* remove if far outside camera */
+
+if(
+p.x < cameraX - 100 ||
+p.x > cameraX + canvas.width + 100 ||
+p.y < cameraY - 100 ||
+p.y > cameraY + canvas.height + 100
+){
+particles.splice(i,1);
+continue;
+}
 
 }
 
@@ -392,7 +411,18 @@ function drawHitIndicators(){
 
 const now = Date.now();
 
-for(let i=hitIndicators.length-1;i>=0;i--){
+for(let i = hitIndicators.length - 1; i >= 0; i--){
+
+const h = hitIndicators[i];
+
+/* remove expired */
+
+if(now > h.time){
+hitIndicators.splice(i,1);
+continue;
+}
+
+/* check if target became visible */
 
 const screenX = h.x - cameraX;
 const screenY = h.y - cameraY;
@@ -401,12 +431,6 @@ if(
 screenX > 0 && screenX < canvas.width &&
 screenY > 0 && screenY < canvas.height
 ){
-continue;
-}
-
-
-if(now > h.time){
-hitIndicators.splice(i,1);
 continue;
 }
 
