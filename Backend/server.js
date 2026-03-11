@@ -14,25 +14,11 @@ const PORT = 8080;
 const TANK_SIZE = 40;
 const BARREL_LENGTH = 30;
 
-/* MAP */
+/* LOAD MAP */
 
-const map = {
-walls:[
-{x:0,y:0,w:900,h:20},
-{x:0,y:580,w:900,h:20},
-{x:0,y:0,w:20,h:600},
-{x:880,y:0,w:20,h:600}
-],
-
-stones:[
-{x:250,y:200,w:80,h:80}
-],
-
-covers:[
-{x:600,y:150,w:100,h:50},
-{x:400,y:450,w:120,h:40}
-]
-};
+const map = JSON.parse(
+fs.readFileSync("./map.json","utf8")
+);
 
 /* GAME STATE */
 
@@ -107,16 +93,49 @@ server.listen(PORT,()=>console.log("Server running on 8080"));
 
 const wss=new WebSocket.Server({server});
 
+
+function getSpawnPoint(){
+
+/* if spawn points exist */
+
+if(map.spawnPoints && map.spawnPoints.length > 0){
+
+const i = Math.floor(Math.random() * map.spawnPoints.length);
+return map.spawnPoints[i];
+
+}
+
+/* otherwise random safe spawn */
+
+while(true){
+
+const x = Math.random() * map.width;
+const y = Math.random() * map.height;
+
+const box = rectFromCenter(x,y,TANK_SIZE,TANK_SIZE);
+
+if(!mapCollision(box)){
+return {x,y};
+}
+
+}
+
+}
+
 /* CREATE PLAYER */
 
 function createPlayer(){
 
 const tank = JSON.parse(JSON.stringify(tanks.defaultTank));
 
+/* get spawn location */
+
+const spawn = getSpawnPoint();
+
 return {
 
-x:450,
-y:300,
+x:spawn.x,
+y:spawn.y,
 turretAngle:0,
 keys:{},
 
@@ -370,11 +389,13 @@ gameState.projectiles.splice(i,1);
 
 if(p.hp<=0){
 
-p.x=450;
-p.y=300;
+const spawn = getSpawnPoint();
 
-p.hp=p.tank.hp;
-p.armorHp=p.tank.armorHp;
+p.x = spawn.x;
+p.y = spawn.y;
+
+p.hp = p.tank.hp;
+p.armorHp = p.tank.armorHp;
 
 }
 
