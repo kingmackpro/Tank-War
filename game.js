@@ -276,11 +276,21 @@ screenX < 0 || screenX > canvas.width ||
 screenY < 0 || screenY > canvas.height
 ){
 
+let existing = hitIndicators.find(h =>
+Math.abs(h.x - target.x) < 50 &&
+Math.abs(h.y - target.y) < 50
+);
+
+if(existing){
+existing.time = Date.now() + 2000;
+}else{
 hitIndicators.push({
 x:target.x,
 y:target.y,
 time:Date.now()+2000
 });
+}
+
 
 }
 
@@ -384,7 +394,16 @@ const now = Date.now();
 
 for(let i=hitIndicators.length-1;i>=0;i--){
 
-const h = hitIndicators[i];
+const screenX = h.x - cameraX;
+const screenY = h.y - cameraY;
+
+if(
+screenX > 0 && screenX < canvas.width &&
+screenY > 0 && screenY < canvas.height
+){
+continue;
+}
+
 
 if(now > h.time){
 hitIndicators.splice(i,1);
@@ -399,10 +418,17 @@ const dy = h.y - player.y;
 
 const angle = Math.atan2(dy,dx);
 
-const dist = Math.min(canvas.width/2-30,Math.hypot(dx,dy));
+const dist = Math.min(
+Math.min(canvas.width, canvas.height)/2 - 40,
+Math.hypot(dx,dy)
+);
 
-const x = canvas.width/2 + Math.cos(angle)*dist;
-const y = canvas.height/2 + Math.sin(angle)*dist;
+
+const indicatorRadius = 120;
+
+const x = canvas.width/2 + Math.cos(angle)*indicatorRadius;
+const y = canvas.height/2 + Math.sin(angle)*indicatorRadius;
+
 
 ctx.save();
 
