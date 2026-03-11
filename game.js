@@ -71,6 +71,8 @@ let turretAngle = 0;
 let aimMode = "mouse";
 let activeSlot = 1;
 
+let hitIndicators = [];
+
 const rotateSpeed = 0.06;
 
 /* VISUAL EFFECTS */
@@ -356,7 +358,13 @@ function drawParticles(){
 
 particles.forEach(p=>{
 ctx.fillStyle=p.color;
-ctx.fillRect(p.x,p.y,3,3);
+ctx.fillRect(
+p.x - cameraX,
+p.y - cameraY,
+3,
+3
+);
+
 });
 
 }
@@ -397,7 +405,12 @@ ctx.font="14px monospace";
 
 damageTexts.forEach(d=>{
 ctx.fillStyle=d.color;
-ctx.fillText(d.text,d.x,d.y);
+ctx.fillText(
+d.text,
+d.x - cameraX,
+d.y - cameraY
+);
+
 });
 
 }
