@@ -180,6 +180,58 @@ export function createRenderer(canvas, ctx, state) {
     });
   }
 
+  function drawRoundedRect(x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  function drawPanel(x, y, width, height, radius = 12) {
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 10;
+    drawRoundedRect(x, y, width, height, radius);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBar(x, y, width, height, ratio, fillColor, label, valueText) {
+    const clampedRatio = Math.max(0, Math.min(ratio, 1));
+
+    ctx.save();
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.fillText(label, x, y - 6);
+    ctx.textAlign = "right";
+    ctx.fillText(valueText, x + width, y - 6);
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    drawRoundedRect(x, y, width, height, 6);
+    ctx.fill();
+
+    ctx.fillStyle = fillColor;
+    drawRoundedRect(x, y, width * clampedRatio, height, 6);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawHitIndicators() {
     const now = Date.now();
 
@@ -248,33 +300,47 @@ export function createRenderer(canvas, ctx, state) {
     for (let i = 0; i < slots; i += 1) {
       const x = start + i * (size + spacing);
       const weapon = weapons[i] || null;
+      const isActive = i + 1 === state.input.activeSlot;
 
-      ctx.fillStyle = i + 1 === state.input.activeSlot ? "#aaa" : "#555";
-      ctx.fillRect(x, y, size, size);
+      ctx.save();
+      ctx.fillStyle = isActive ? "rgba(245,245,245,0.92)" : "rgba(40,40,40,0.88)";
+      ctx.strokeStyle = isActive ? "#ffd800" : "rgba(255,255,255,0.12)";
+      ctx.lineWidth = isActive ? 3 : 1;
+      ctx.shadowColor = isActive ? "rgba(255,216,0,0.35)" : "transparent";
+      ctx.shadowBlur = isActive ? 12 : 0;
+      drawRoundedRect(x, y, size, size, 10);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.stroke();
 
-      ctx.strokeStyle = "#222";
-      ctx.strokeRect(x, y, size, size);
-
-      ctx.fillStyle = "#000";
-      ctx.font = "18px monospace";
-      ctx.fillText(i + 1, x + 24, y + 34);
+      ctx.fillStyle = isActive ? "#111" : "rgba(255,255,255,0.75)";
+      ctx.font = "bold 16px monospace";
+      ctx.fillText(i + 1, x + 10, y + 18);
 
       if (!weapon) {
+        ctx.fillStyle = isActive ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.18)";
+        ctx.font = "10px monospace";
+        ctx.fillText("EMPTY", x + 10, y + 38);
+        ctx.restore();
         continue;
       }
 
-      ctx.fillStyle = "#ffd800";
-      ctx.fillRect(x + size / 2 - 4, y + 12, 8, 26);
+      ctx.fillStyle = isActive ? "#ffb800" : "#c49a00";
+      drawRoundedRect(x + size / 2 - 4, y + 12, 8, 26, 3);
+      ctx.fill();
 
       const lastShot = player.lastShotTime ? player.lastShotTime[i] : 0;
       const elapsed = Date.now() - lastShot;
       const ratio = Math.min(elapsed / weapon.cooldown, 1);
 
-      ctx.fillStyle = "#111";
-      ctx.fillRect(x, y + size - 6, size, 4);
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      drawRoundedRect(x + 8, y + size - 12, size - 16, 6, 3);
+      ctx.fill();
 
-      ctx.fillStyle = "#00ff88";
-      ctx.fillRect(x, y + size - 6, size * ratio, 4);
+      ctx.fillStyle = isActive ? "#00ff88" : "rgba(0,255,136,0.55)";
+      drawRoundedRect(x + 8, y + size - 12, (size - 16) * ratio, 6, 3);
+      ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -286,16 +352,70 @@ export function createRenderer(canvas, ctx, state) {
     }
 
     const weapon = player.tank.weapons[state.input.activeSlot - 1] || null;
+    const panelX = 12;
+    const panelY = 12;
+    const panelWidth = 250;
+    const panelHeight = 188;
+    const contentX = panelX + 14;
+    let cursorY = panelY + 22;
 
-    ctx.fillStyle = "white";
-    ctx.font = "16px monospace";
-    ctx.fillText(`HP: ${player.hp}`, 10, 20);
-    ctx.fillText(`Armor: ${player.armorHp}`, 10, 40);
-    ctx.fillText(`Energy: ${player.tank.energy}`, 10, 60);
-    ctx.fillText(`Speed: ${player.tank.speed}`, 10, 80);
-    ctx.fillText(`Weapon: ${weapon ? weapon.name : "Empty"}`, 10, 100);
-    ctx.fillText(`FPS: ${effects.fps}`, 10, 140);
-    ctx.fillText(`MS: ${effects.frameMS.toFixed(1)}`, 10, 160);
+    drawPanel(panelX, panelY, panelWidth, panelHeight);
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 4;
+
+    ctx.font = "bold 15px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("PLAYER", contentX, cursorY);
+    cursorY += 24;
+
+    drawBar(
+      contentX,
+      cursorY,
+      panelWidth - 28,
+      12,
+      player.hp / player.tank.hp,
+      "#39d353",
+      "HP",
+      `${player.hp} / ${player.tank.hp}`
+    );
+    cursorY += 30;
+
+    drawBar(
+      contentX,
+      cursorY,
+      panelWidth - 28,
+      12,
+      player.armorHp / player.tank.armorHp,
+      "#4aa3ff",
+      "ARMOR",
+      `${player.armorHp} / ${player.tank.armorHp}`
+    );
+    cursorY += 34;
+
+    ctx.font = "bold 15px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("WEAPON", contentX, cursorY);
+    cursorY += 20;
+
+    ctx.font = "13px monospace";
+    ctx.fillStyle = "#ffd800";
+    ctx.fillText(weapon ? weapon.name : "Empty", contentX, cursorY);
+    cursorY += 24;
+
+    ctx.font = "bold 15px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("PERFORMANCE", contentX, cursorY);
+    cursorY += 20;
+
+    ctx.font = "13px monospace";
+    ctx.fillStyle = "rgba(255,255,255,0.84)";
+    ctx.fillText(`FPS  ${effects.fps}`, contentX, cursorY);
+    cursorY += 18;
+    ctx.fillText(`MS   ${effects.frameMS.toFixed(1)}`, contentX, cursorY);
+
+    ctx.restore();
   }
 
   function updateCamera() {
@@ -326,6 +446,9 @@ export function createRenderer(canvas, ctx, state) {
   }
 
   function draw() {
+    const now = Date.now();
+    const alpha = Math.min((now - state.lastSnapshotTime) / 100, 1);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#242424";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -334,10 +457,18 @@ export function createRenderer(canvas, ctx, state) {
     drawMap();
     updateShake();
 
-    for (const id in state.gameState.players) {
+    for (const id in state.currentGameState.players) {
+      const currentPlayer = state.currentGameState.players[id];
+      const previousPlayer = state.previousGameState.players[id];
+      const interpolatedPlayer = previousPlayer ? {
+        ...currentPlayer,
+        x: previousPlayer.x + (currentPlayer.x - previousPlayer.x) * alpha,
+        y: previousPlayer.y + (currentPlayer.y - previousPlayer.y) * alpha
+      } : currentPlayer;
+
       drawTank(
         ctx,
-        state.gameState.players[id],
+        interpolatedPlayer,
         id === state.playerId,
         state.camera.x,
         state.camera.y,
@@ -349,7 +480,7 @@ export function createRenderer(canvas, ctx, state) {
     }
 
     ctx.fillStyle = "#ffd800";
-    state.gameState.projectiles.forEach((projectile) => {
+    state.currentGameState.projectiles.forEach((projectile) => {
       drawProjectile(ctx, projectile, state.camera.x, state.camera.y);
     });
 

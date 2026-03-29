@@ -51,15 +51,25 @@ function updatePlayers(gameState, map, tankSize) {
     if (player.keys.a) dx -= speed;
     if (player.keys.d) dx += speed;
 
-    const nextBox = rectFromCenter(
+    const nextXbox = rectFromCenter(
       player.x + dx,
+      player.y,
+      tankSize,
+      tankSize
+    );
+
+    if (!mapCollision(map, nextXbox)) {
+      player.x += dx;
+    }
+
+    const nextYBox = rectFromCenter(
+      player.x,
       player.y + dy,
       tankSize,
       tankSize
     );
 
-    if (!mapCollision(map, nextBox)) {
-      player.x += dx;
+    if (!mapCollision(map, nextYBox)) {
       player.y += dy;
     }
   }

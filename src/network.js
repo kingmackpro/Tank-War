@@ -1,7 +1,16 @@
-const SERVER_URL = "wss://summary-requirement-maple-capable.trycloudflare.com";
+const SERVER_URL = "wss://functions-antivirus-emily-shakespeare.trycloudflare.com";
 
 export function createNetwork(state, handlers) {
   let socket = null;
+  let currentServerUrl = SERVER_URL;
+  let reconnectTimeout = null;
+
+  function clearReconnectTimeout() {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+  }
 
   function sendMessage(message) {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -37,10 +46,15 @@ export function createNetwork(state, handlers) {
       }
 
       state.lastServerTime = data.time;
-      state.gameState.players = data.players;
-      state.gameState.projectiles = data.projectiles;
+      state.previousGameState = state.currentGameState;
+      state.currentGameState = {
+        players: data.players,
+        projectiles: data.projectiles
+      };
+      state.gameState = state.currentGameState;
+      state.lastSnapshotTime = Date.now();
 
-      const player = state.gameState.players[state.playerId];
+      const player = state.currentGameState.players[state.playerId];
 
       if (player && Number.isInteger(player.weaponSlot)) {
         state.input.activeSlot = player.weaponSlot + 1;
@@ -54,27 +68,103 @@ export function createNetwork(state, handlers) {
     }
   }
 
-  function connect() {
-    socket = new WebSocket(SERVER_URL);
+  function disconnectSocket() {
+    if (!socket) {
+      return;
+    }
 
-    socket.onopen = () => {
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    socket.onerror = null;
+    socket.close();
+    socket = null;
+  }
+
+  function connect() {
+    clearReconnectTimeout();
+
+    const nextSocket = new WebSocket(currentServerUrl);
+    socket = nextSocket;
+
+    nextSocket.onopen = () => {
       sendMessage({
         type: "session",
         sessionId: state.sessionId
       });
     };
 
-    socket.onmessage = handleServerMessage;
+    nextSocket.onmessage = handleServerMessage;
 
-    socket.onclose = () => {
+    nextSocket.onclose = () => {
+      if (socket !== nextSocket) {
+        return;
+      }
+
       console.log("Disconnected. Reconnecting...");
-      setTimeout(connect, 2000);
+      reconnectTimeout = setTimeout(connect, 2000);
     };
 
-    socket.onerror = () => {
-      socket.close();
+    nextSocket.onerror = () => {
+      nextSocket.close();
     };
   }
+
+  function reconnect() {
+    clearReconnectTimeout();
+    disconnectSocket();
+    connect();
+  }
+
+  function toPromptUrl(wsUrl) {
+    if (wsUrl.startsWith("wss://")) {
+      return `https://${wsUrl.slice(6)}`;
+    }
+
+    if (wsUrl.startsWith("ws://")) {
+      return `http://${wsUrl.slice(5)}`;
+    }
+
+    return wsUrl;
+  }
+
+  function normalizeBackendUrl(url) {
+    const trimmedUrl = url.trim();
+
+    if (trimmedUrl.startsWith("https://")) {
+      return `wss://${trimmedUrl.slice(8)}`;
+    }
+
+    if (trimmedUrl.startsWith("http://")) {
+      return `ws://${trimmedUrl.slice(7)}`;
+    }
+
+    return null;
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "F2") {
+      return;
+    }
+
+    event.preventDefault();
+
+    const input = window.prompt("Enter backend URL:", toPromptUrl(currentServerUrl));
+
+    if (input === null) {
+      return;
+    }
+
+    const nextUrl = normalizeBackendUrl(input);
+
+    if (!nextUrl) {
+      window.alert("Invalid backend URL. Use http:// or https://");
+      return;
+    }
+
+    currentServerUrl = nextUrl;
+    reconnect();
+  });
 
   connect();
 

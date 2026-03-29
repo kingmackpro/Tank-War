@@ -19,6 +19,15 @@ const state = {
     players: {},
     projectiles: []
   },
+  previousGameState: {
+    players: {},
+    projectiles: []
+  },
+  currentGameState: {
+    players: {},
+    projectiles: []
+  },
+  lastSnapshotTime: Date.now(),
   input: {
     keys: {},
     turretAngle: 0,
