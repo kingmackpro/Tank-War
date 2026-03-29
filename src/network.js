@@ -1,4 +1,4 @@
-const SERVER_URL = "wss://prospective-cos-crimes-unique.trycloudflare.com";
+const SERVER_URL = "wss://summary-requirement-maple-capable.trycloudflare.com";
 
 export function createNetwork(state, handlers) {
   let socket = null;
