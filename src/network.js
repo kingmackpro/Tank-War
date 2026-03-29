@@ -1,4 +1,4 @@
-const SERVER_URL = "wss://functions-antivirus-emily-shakespeare.trycloudflare.com";
+const SERVER_URL = "wss://bright-boss-episodes-silver.trycloudflare.com";
 
 export function createNetwork(state, handlers) {
   let socket = null;

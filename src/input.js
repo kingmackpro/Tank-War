@@ -133,7 +133,7 @@ function shoot(state, sendMessage) {
     return;
   }
 
-  const weapon = player.tank.weapons[state.input.activeSlot - 1] || null;
+  const weapon = player.weaponSlots?.[state.input.activeSlot - 1] || null;
 
   if (!weapon) {
     return;

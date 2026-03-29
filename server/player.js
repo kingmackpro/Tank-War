@@ -1,4 +1,9 @@
 const { mapCollision, rectFromCenter } = require("./physics");
+const {
+  attachPlayerRuntime,
+  createPlayerRuntime,
+  syncPlayerWeaponPublicState
+} = require("./weapons/runtime");
 
 function cloneTank(template) {
   return JSON.parse(JSON.stringify(template));
@@ -21,11 +26,19 @@ function getSpawnPoint(map, tankSize) {
   }
 }
 
-function createPlayer(tanks, map, tankSize) {
+function createPlayer(tanks, weaponDefinitions, map, tankSize) {
   const tank = cloneTank(tanks.defaultTank);
   const spawn = getSpawnPoint(map, tankSize);
+  const weaponSlotIds = Array.isArray(tank.weaponSlots)
+    ? tank.weaponSlots.slice(0, 5)
+    : [];
 
-  return {
+  while (weaponSlotIds.length < 5) {
+    weaponSlotIds.push(null);
+  }
+
+  const player = {
+    id: null,
     x: spawn.x,
     y: spawn.y,
     turretAngle: 0,
@@ -34,13 +47,40 @@ function createPlayer(tanks, map, tankSize) {
     hp: tank.hp,
     armorHp: tank.armorHp,
     weaponSlot: 0,
-    lastShotTime: [0, 0, 0, 0, 0]
+    weaponSlots: [],
+    weaponState: {
+      activeSlot: 0,
+      slots: []
+    },
+    playerState: "idle"
   };
+
+  attachPlayerRuntime(
+    player,
+    createPlayerRuntime(weaponSlotIds, weaponDefinitions)
+  );
+  syncPlayerWeaponPublicState(player, weaponDefinitions);
+
+  return player;
 }
 
 function updatePlayers(gameState, map, tankSize) {
   for (const id in gameState.players) {
     const player = gameState.players[id];
+    const runtime = player.runtime;
+
+    if (runtime?.controlState === "executing") {
+      continue;
+    }
+
+    if (runtime?.controlState === "controlled_entity") {
+      continue;
+    }
+
+    if (runtime?.movementLock.locked || runtime?.movementLock.rotationOnly) {
+      continue;
+    }
+
     const speed = player.tank.speed;
 
     let dx = 0;

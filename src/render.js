@@ -24,7 +24,7 @@ export function createRenderer(canvas, ctx, state) {
 
   function updateWeaponUiState(player) {
     const currentSlot = state.input.activeSlot;
-    const weapon = player.tank.weapons[currentSlot - 1] || null;
+    const weapon = player.weaponSlots?.[currentSlot - 1] || null;
 
     if (effects.previousWeaponSlot === null) {
       effects.previousWeaponSlot = currentSlot;
@@ -332,7 +332,7 @@ export function createRenderer(canvas, ctx, state) {
       return;
     }
 
-    const weapons = player.tank.weapons;
+    const weapons = player.weaponSlots || [];
     const slots = 5;
     const size = 60;
     const spacing = 10;
@@ -380,9 +380,12 @@ export function createRenderer(canvas, ctx, state) {
       drawRoundedRect(x + slotSize / 2 - 4, slotY + 12, 8, 26, 3);
       ctx.fill();
 
-      const lastShot = player.lastShotTime ? player.lastShotTime[i] : 0;
-      const elapsed = Date.now() - lastShot;
-      const ratio = Math.min(elapsed / weapon.cooldown, 1);
+      const slotState = player.weaponState?.slots?.[i] || null;
+      const cooldownEndsAt = slotState ? slotState.cooldownEndsAt : 0;
+      const remainingCooldown = Math.max(cooldownEndsAt - Date.now(), 0);
+      const ratio = weapon.cooldown > 0
+        ? 1 - (remainingCooldown / weapon.cooldown)
+        : 1;
 
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       drawRoundedRect(x + 8, slotY + slotSize - 12, slotSize - 16, 6, 3);

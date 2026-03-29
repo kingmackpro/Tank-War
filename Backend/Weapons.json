@@ -1,0 +1,207 @@
+{
+  "definitions": [
+    {
+      "id": "basic_gun",
+      "name": "Basic Gun",
+      "cooldown": 200,
+      "state": {
+        "charge": 0,
+        "flags": {},
+        "timers": {}
+      },
+      "events": {
+        "tap": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 15,
+                "speed": 6,
+                "size": 6,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ],
+        "re_press": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 15,
+                "speed": 6,
+                "size": 6,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "fast_gun",
+      "name": "Fast Gun",
+      "cooldown": 80,
+      "state": {
+        "charge": 0,
+        "flags": {},
+        "timers": {}
+      },
+      "events": {
+        "tap": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 8,
+                "speed": 12,
+                "size": 4,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ],
+        "re_press": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 8,
+                "speed": 12,
+                "size": 4,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "heavy_gun",
+      "name": "Heavy Gun",
+      "cooldown": 400,
+      "state": {
+        "charge": 0,
+        "flags": {},
+        "timers": {}
+      },
+      "events": {
+        "tap": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 30,
+                "speed": 4,
+                "size": 10,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ],
+        "re_press": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 30,
+                "speed": 4,
+                "size": 10,
+                "damageType": "kinetic",
+                "ignore": { "owner": true }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "burst_charge_shot",
+      "name": "Burst Charge Shot",
+      "cooldown": 300,
+      "maxHoldTime": 800,
+      "state": {
+        "charge": 0,
+        "flags": {
+          "charging": false
+        },
+        "timers": {}
+      },
+      "events": {
+        "tap": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" },
+              { "type": "is_not_holding" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "damage": 10,
+                "speed": 8,
+                "size": 6,
+                "ignore": { "owner": true }
+              }
+            ],
+            "consumeCooldown": true
+          }
+        ],
+        "hold_start": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              { "type": "lock_movement" }
+            ],
+            "consumeCooldown": false
+          }
+        ],
+        "hold_end": [
+          {
+            "conditions": [
+              { "type": "cooldown_ready" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "count": 3,
+                "spread": 15,
+                "damage": 8,
+                "speed": 7,
+                "size": 5,
+                "ignore": { "owner": true }
+              },
+              { "type": "unlock_movement" }
+            ],
+            "consumeCooldown": true
+          }
+        ],
+        "re_press": []
+      }
+    }
+  ]
+}

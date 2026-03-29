@@ -3,9 +3,12 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
+const { destroyEntity, getEntity, registerEntity } = require("./entities");
 const { createGameLoop } = require("./gameLoop");
 const { createPlayer } = require("./player");
-const { createProjectile } = require("./projectile");
+const { spawnProjectile } = require("./projectile");
+const { createWeaponSystem } = require("./weapons");
+const { syncPlayerWeaponPublicState } = require("./weapons/runtime");
 const {
   BARREL_LENGTH,
   PORT,
@@ -14,7 +17,8 @@ const {
   gameState,
   map,
   sessions,
-  tanks
+  tanks,
+  weaponDefinitions
 } = require("./state");
 
 const ROOT_DIR = path.join(__dirname, "..");
@@ -121,6 +125,7 @@ function getOrCreateSession(sessionId) {
   if (sessionId && sessions[sessionId]) {
     const session = sessions[sessionId];
     clearSessionCleanup(session);
+    session.player.id = sessionId;
 
     return {
       playerId: sessionId,
@@ -129,7 +134,9 @@ function getOrCreateSession(sessionId) {
   }
 
   const playerId = Math.random().toString(36).substring(2, 9);
-  const player = createPlayer(tanks, map, TANK_SIZE);
+  const player = createPlayer(tanks, weaponDefinitions, map, TANK_SIZE);
+
+  player.id = playerId;
 
   sessions[playerId] = {
     player,
@@ -165,6 +172,17 @@ server.listen(PORT, () => {
 });
 
 const wss = new WebSocket.Server({ server });
+const weaponSystem = createWeaponSystem({
+  barrelLength: BARREL_LENGTH,
+  destroyEntity: (entityId) => destroyEntity(gameState, entityId),
+  gameState,
+  getEntity: (entityId) => getEntity(gameState, entityId),
+  map,
+  registerEntity: (entity, prefix) => registerEntity(gameState, entity, prefix),
+  spawnProjectile: (config) => spawnProjectile(gameState, config),
+  tankSize: TANK_SIZE,
+  weaponDefinitions
+});
 
 wss.on("connection", (ws) => {
   let player = null;
@@ -182,6 +200,7 @@ wss.on("connection", (ws) => {
 
       playerId = session.playerId;
       player = session.player;
+      syncPlayerWeaponPublicState(player, weaponDefinitions);
       gameState.players[playerId] = player;
 
       ws.send(JSON.stringify({ type: "session", sessionId: playerId }));
@@ -206,18 +225,14 @@ wss.on("connection", (ws) => {
       const index = slot - 1;
 
       if (index >= 0 && index < 5) {
-        player.weaponSlot = index;
+        weaponSystem.handleWeaponSwitch(player, index);
       }
 
       return;
     }
 
     if (validateShootMessage(data)) {
-      const projectile = createProjectile(player, playerId, BARREL_LENGTH);
-
-      if (projectile) {
-        gameState.projectiles.push(projectile);
-      }
+      weaponSystem.handleShootInput(player);
     }
   });
 
@@ -236,6 +251,7 @@ const updateGame = createGameLoop({
   getSpawnPoint: require("./player").getSpawnPoint,
   map,
   tankSize: TANK_SIZE,
+  weaponSystem,
   wss
 });
 

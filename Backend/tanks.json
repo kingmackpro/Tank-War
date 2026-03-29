@@ -6,28 +6,12 @@
     "energy": 100,
     "speed": 3,
     "type": "basic",
-    "weapons": [
-      {
-        "name": "Basic Gun",
-        "damage": 15,
-        "cooldown": 200,
-        "projectileSpeed": 6,
-        "projectileSize": 6
-      },
-      {
-        "name": "Fast Gun",
-        "damage": 8,
-        "cooldown": 80,
-        "projectileSpeed": 12,
-        "projectileSize": 4
-      },
-      {
-        "name": "Heavy Gun",
-        "damage": 30,
-        "cooldown": 400,
-        "projectileSpeed": 4,
-        "projectileSize": 10
-      }
+    "weaponSlots": [
+      "basic_gun",
+      "fast_gun",
+      "heavy_gun",
+      "burst_charge_shot",
+      null
     ]
   }
 }
