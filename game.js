@@ -2,7 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 /* SERVER URL */
-const SERVER_URL = "wss://grip-spreading-ordinance-blonde.trycloudflare.com";
+const SERVER_URL = "wss://prospective-cos-crimes-unique.trycloudflare.com";
 
 let socket;
 let sessionId = localStorage.getItem("tankSession");
