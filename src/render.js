@@ -16,8 +16,37 @@ export function createRenderer(canvas, ctx, state) {
     frameCount: 0,
     lastFpsTime: performance.now(),
     lastFrameTime: performance.now(),
-    frameMS: 0
+    frameMS: 0,
+    previousWeaponSlot: null,
+    weaponAnimationProgress: 1,
+    displayedWeaponName: "Empty"
   };
+
+  function updateWeaponUiState(player) {
+    const currentSlot = state.input.activeSlot;
+    const weapon = player.tank.weapons[currentSlot - 1] || null;
+
+    if (effects.previousWeaponSlot === null) {
+      effects.previousWeaponSlot = currentSlot;
+      effects.displayedWeaponName = weapon ? weapon.name : "Empty";
+      effects.weaponAnimationProgress = 1;
+      return;
+    }
+
+    if (currentSlot !== effects.previousWeaponSlot) {
+      effects.previousWeaponSlot = currentSlot;
+      effects.displayedWeaponName = weapon ? weapon.name : "Empty";
+      effects.weaponAnimationProgress = 0;
+      return;
+    }
+
+    if (effects.weaponAnimationProgress < 1) {
+      effects.weaponAnimationProgress = Math.min(
+        effects.weaponAnimationProgress + effects.frameMS / 160,
+        1
+      );
+    }
+  }
 
   function spawnParticles(x, y, color) {
     for (let i = 0; i < 8; i += 1) {
@@ -196,38 +225,52 @@ export function createRenderer(canvas, ctx, state) {
 
   function drawPanel(x, y, width, height, radius = 12) {
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.strokeStyle = "rgba(255,255,255,0.12)";
-    ctx.lineWidth = 1;
-    ctx.shadowColor = "rgba(0,0,0,0.3)";
-    ctx.shadowBlur = 10;
+    ctx.fillStyle = "rgba(8,10,14,0.72)";
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1.25;
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 5;
     drawRoundedRect(x, y, width, height, radius);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     ctx.stroke();
     ctx.restore();
   }
 
-  function drawBar(x, y, width, height, ratio, fillColor, label, valueText) {
+  function drawBar(x, y, width, height, ratio, fillColor, label, valueText, options = {}) {
     const clampedRatio = Math.max(0, Math.min(ratio, 1));
+    const {
+      labelColor = "rgba(255,255,255,0.72)",
+      backgroundColor = "rgba(255,255,255,0.08)",
+      borderColor = "rgba(255,255,255,0.08)",
+      shadowColor = "transparent",
+      shadowBlur = 0,
+      valueColor = labelColor
+    } = options;
 
     ctx.save();
     ctx.font = "11px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.fillStyle = labelColor;
     ctx.fillText(label, x, y - 6);
     ctx.textAlign = "right";
+    ctx.fillStyle = valueColor;
     ctx.fillText(valueText, x + width, y - 6);
     ctx.textAlign = "left";
 
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillStyle = backgroundColor;
     drawRoundedRect(x, y, width, height, 6);
     ctx.fill();
 
+    ctx.shadowColor = shadowColor;
+    ctx.shadowBlur = shadowBlur;
     ctx.fillStyle = fillColor;
     drawRoundedRect(x, y, width * clampedRatio, height, 6);
     ctx.fill();
+    ctx.shadowBlur = 0;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = borderColor;
     ctx.stroke();
     ctx.restore();
   }
@@ -295,38 +338,46 @@ export function createRenderer(canvas, ctx, state) {
     const spacing = 10;
     const total = slots * size + (slots - 1) * spacing;
     const start = canvas.width / 2 - total / 2;
-    const y = canvas.height - size - 10;
+    const y = canvas.height - size - 14;
 
     for (let i = 0; i < slots; i += 1) {
-      const x = start + i * (size + spacing);
-      const weapon = weapons[i] || null;
       const isActive = i + 1 === state.input.activeSlot;
+      const slotScale = isActive
+        ? 1 + (1 - effects.weaponAnimationProgress) * 0.2
+        : 1;
+      const slotSize = size * slotScale;
+      const offset = (slotSize - size) / 2;
+      const x = start + i * (size + spacing) - offset;
+      const slotY = y - offset;
+      const weapon = weapons[i] || null;
 
       ctx.save();
-      ctx.fillStyle = isActive ? "rgba(245,245,245,0.92)" : "rgba(40,40,40,0.88)";
-      ctx.strokeStyle = isActive ? "#ffd800" : "rgba(255,255,255,0.12)";
+      ctx.fillStyle = isActive ? "rgba(248,248,248,0.96)" : "rgba(28,30,36,0.8)";
+      ctx.strokeStyle = isActive ? "#ffd800" : "rgba(255,255,255,0.1)";
       ctx.lineWidth = isActive ? 3 : 1;
-      ctx.shadowColor = isActive ? "rgba(255,216,0,0.35)" : "transparent";
-      ctx.shadowBlur = isActive ? 12 : 0;
-      drawRoundedRect(x, y, size, size, 10);
+      ctx.shadowColor = isActive ? "rgba(255,216,0,0.45)" : "rgba(0,0,0,0.18)";
+      ctx.shadowBlur = isActive ? 16 : 6;
+      ctx.shadowOffsetY = isActive ? 4 : 2;
+      drawRoundedRect(x, slotY, slotSize, slotSize, 12);
       ctx.fill();
       ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
       ctx.stroke();
 
-      ctx.fillStyle = isActive ? "#111" : "rgba(255,255,255,0.75)";
-      ctx.font = "bold 16px monospace";
-      ctx.fillText(i + 1, x + 10, y + 18);
+      ctx.fillStyle = isActive ? "#111" : "rgba(255,255,255,0.6)";
+      ctx.font = isActive ? "bold 17px monospace" : "bold 15px monospace";
+      ctx.fillText(i + 1, x + 11, slotY + 19);
 
       if (!weapon) {
-        ctx.fillStyle = isActive ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.18)";
+        ctx.fillStyle = isActive ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.16)";
         ctx.font = "10px monospace";
-        ctx.fillText("EMPTY", x + 10, y + 38);
+        ctx.fillText("EMPTY", x + 10, slotY + slotSize * 0.62);
         ctx.restore();
         continue;
       }
 
       ctx.fillStyle = isActive ? "#ffb800" : "#c49a00";
-      drawRoundedRect(x + size / 2 - 4, y + 12, 8, 26, 3);
+      drawRoundedRect(x + slotSize / 2 - 4, slotY + 12, 8, 26, 3);
       ctx.fill();
 
       const lastShot = player.lastShotTime ? player.lastShotTime[i] : 0;
@@ -334,11 +385,11 @@ export function createRenderer(canvas, ctx, state) {
       const ratio = Math.min(elapsed / weapon.cooldown, 1);
 
       ctx.fillStyle = "rgba(0,0,0,0.5)";
-      drawRoundedRect(x + 8, y + size - 12, size - 16, 6, 3);
+      drawRoundedRect(x + 8, slotY + slotSize - 12, slotSize - 16, 6, 3);
       ctx.fill();
 
       ctx.fillStyle = isActive ? "#00ff88" : "rgba(0,255,136,0.55)";
-      drawRoundedRect(x + 8, y + size - 12, (size - 16) * ratio, 6, 3);
+      drawRoundedRect(x + 8, slotY + slotSize - 12, (slotSize - 16) * ratio, 6, 3);
       ctx.fill();
       ctx.restore();
     }
@@ -351,68 +402,97 @@ export function createRenderer(canvas, ctx, state) {
       return;
     }
 
-    const weapon = player.tank.weapons[state.input.activeSlot - 1] || null;
-    const panelX = 12;
-    const panelY = 12;
-    const panelWidth = 250;
-    const panelHeight = 188;
-    const contentX = panelX + 14;
-    let cursorY = panelY + 22;
+    const panelX = 14;
+    const panelY = 14;
+    const panelWidth = 270;
+    const contentX = panelX + 18;
+    const topPadding = 28;
+    const bottomPadding = 18;
+    const titleGap = 28;
+    const barGap = 32;
+    const sectionGap = 40;
+    const weaponGap = 34;
+    const perfLineGap = 15;
+
+    let measureY = panelY + topPadding;
+    measureY += titleGap;
+    measureY += barGap;
+    measureY += sectionGap;
+    measureY += weaponGap;
+    measureY += sectionGap;
+    measureY += perfLineGap;
+    const panelHeight = measureY - panelY + bottomPadding;
+
+    let cursorY = panelY + topPadding;
 
     drawPanel(panelX, panelY, panelWidth, panelHeight);
 
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.45)";
-    ctx.shadowBlur = 4;
+    ctx.shadowBlur = 5;
 
-    ctx.font = "bold 15px monospace";
+    ctx.font = "bold 16px monospace";
     ctx.fillStyle = "#ffffff";
     ctx.fillText("PLAYER", contentX, cursorY);
-    cursorY += 24;
+    cursorY += titleGap;
 
     drawBar(
       contentX,
       cursorY,
-      panelWidth - 28,
-      12,
+      panelWidth - 36,
+      14,
       player.hp / player.tank.hp,
-      "#39d353",
+      "#45e06f",
       "HP",
-      `${player.hp} / ${player.tank.hp}`
+      `${player.hp} / ${player.tank.hp}`,
+      {
+        labelColor: "rgba(255,255,255,0.92)",
+        valueColor: "rgba(255,255,255,0.92)",
+        backgroundColor: "rgba(255,255,255,0.1)",
+        borderColor: "rgba(255,255,255,0.12)",
+        shadowColor: "rgba(69,224,111,0.3)",
+        shadowBlur: 10
+      }
     );
-    cursorY += 30;
+    cursorY += barGap;
 
     drawBar(
       contentX,
       cursorY,
-      panelWidth - 28,
-      12,
+      panelWidth - 36,
+      10,
       player.armorHp / player.tank.armorHp,
       "#4aa3ff",
       "ARMOR",
-      `${player.armorHp} / ${player.tank.armorHp}`
+      `${player.armorHp} / ${player.tank.armorHp}`,
+      {
+        labelColor: "rgba(255,255,255,0.68)",
+        valueColor: "rgba(255,255,255,0.68)",
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderColor: "rgba(255,255,255,0.08)"
+      }
     );
-    cursorY += 34;
+    cursorY += sectionGap;
 
-    ctx.font = "bold 15px monospace";
+    ctx.font = "bold 16px monospace";
     ctx.fillStyle = "#ffffff";
     ctx.fillText("WEAPON", contentX, cursorY);
-    cursorY += 20;
-
-    ctx.font = "13px monospace";
-    ctx.fillStyle = "#ffd800";
-    ctx.fillText(weapon ? weapon.name : "Empty", contentX, cursorY);
     cursorY += 24;
 
-    ctx.font = "bold 15px monospace";
+    ctx.font = "bold 14px monospace";
+    ctx.fillStyle = "#ffd800";
+    ctx.fillText(effects.displayedWeaponName, contentX, cursorY);
+    cursorY += weaponGap;
+
+    ctx.font = "bold 16px monospace";
     ctx.fillStyle = "#ffffff";
     ctx.fillText("PERFORMANCE", contentX, cursorY);
-    cursorY += 20;
+    cursorY += 22;
 
-    ctx.font = "13px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.84)";
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "rgba(255,255,255,0.54)";
     ctx.fillText(`FPS  ${effects.fps}`, contentX, cursorY);
-    cursorY += 18;
+    cursorY += perfLineGap;
     ctx.fillText(`MS   ${effects.frameMS.toFixed(1)}`, contentX, cursorY);
 
     ctx.restore();
@@ -456,6 +536,11 @@ export function createRenderer(canvas, ctx, state) {
     updateCamera();
     drawMap();
     updateShake();
+
+    const localPlayer = state.gameState.players[state.playerId];
+    if (localPlayer) {
+      updateWeaponUiState(localPlayer);
+    }
 
     for (const id in state.currentGameState.players) {
       const currentPlayer = state.currentGameState.players[id];

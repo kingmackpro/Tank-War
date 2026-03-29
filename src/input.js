@@ -9,6 +9,7 @@ export function setupInput(options) {
 
       if (slot !== state.input.activeSlot) {
         state.input.activeSlot = slot;
+        state.input.lastLocalWeaponSwitchTime = Date.now();
         sendMessage({
           type: "weapon_switch",
           slot

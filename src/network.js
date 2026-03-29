@@ -32,6 +32,7 @@ export function createNetwork(state, handlers) {
 
     if (data.type === "init") {
       state.playerId = data.id;
+      state.input.hasWeaponSlotSync = false;
       return;
     }
 
@@ -57,7 +58,19 @@ export function createNetwork(state, handlers) {
       const player = state.currentGameState.players[state.playerId];
 
       if (player && Number.isInteger(player.weaponSlot)) {
-        state.input.activeSlot = player.weaponSlot + 1;
+        const serverSlot = player.weaponSlot + 1;
+        const now = Date.now();
+        const needsInitialSync = !state.input.hasWeaponSlotSync;
+        const desyncDuration = now - state.input.lastLocalWeaponSwitchTime;
+        const hasMajorDesync =
+          state.input.activeSlot !== serverSlot &&
+          desyncDuration > 500;
+
+        if (needsInitialSync || hasMajorDesync) {
+          state.input.activeSlot = serverSlot;
+        }
+
+        state.input.hasWeaponSlotSync = true;
       }
 
       return;

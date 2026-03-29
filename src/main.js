@@ -33,6 +33,8 @@ const state = {
     turretAngle: 0,
     aimMode: "mouse",
     activeSlot: 1,
+    hasWeaponSlotSync: false,
+    lastLocalWeaponSwitchTime: 0,
     mouseHeld: false,
     spaceHeld: false,
     lastInput: "",
