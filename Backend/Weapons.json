@@ -145,9 +145,7 @@
       "maxHoldTime": 800,
       "state": {
         "charge": 0,
-        "flags": {
-          "charging": false
-        },
+        "flags": {},
         "timers": {}
       },
       "events": {
@@ -181,6 +179,24 @@
           }
         ],
         "hold_end": [
+          {
+            "conditions": [
+              { "type": "charge_complete" }
+            ],
+            "actions": [
+              {
+                "type": "spawn_projectile",
+                "count": 5,
+                "spread": 20,
+                "damage": 14,
+                "speed": 8,
+                "size": 6,
+                "ignore": { "owner": true }
+              },
+              { "type": "unlock_movement" }
+            ],
+            "consumeCooldown": true
+          },
           {
             "conditions": [
               { "type": "cooldown_ready" }

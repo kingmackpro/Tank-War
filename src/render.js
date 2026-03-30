@@ -405,6 +405,10 @@ export function createRenderer(canvas, ctx, state) {
       return;
     }
 
+    const activeSlotIndex = state.input.activeSlot - 1;
+    const activeWeaponState = player.weaponState?.slots?.[activeSlotIndex] || null;
+    const isHolding = Boolean(activeWeaponState?.isHolding);
+    const holdProgress = Math.max(0, Math.min(activeWeaponState?.holdProgress || 0, 1));
     const panelX = 14;
     const panelY = 14;
     const panelWidth = 270;
@@ -415,6 +419,8 @@ export function createRenderer(canvas, ctx, state) {
     const barGap = 32;
     const sectionGap = 40;
     const weaponGap = 34;
+    const holdSectionGap = 34;
+    const holdBarGap = 24;
     const perfLineGap = 15;
 
     let measureY = panelY + topPadding;
@@ -422,6 +428,10 @@ export function createRenderer(canvas, ctx, state) {
     measureY += barGap;
     measureY += sectionGap;
     measureY += weaponGap;
+    if (isHolding) {
+      measureY += holdSectionGap;
+      measureY += holdBarGap;
+    }
     measureY += sectionGap;
     measureY += perfLineGap;
     const panelHeight = measureY - panelY + bottomPadding;
@@ -486,6 +496,35 @@ export function createRenderer(canvas, ctx, state) {
     ctx.fillStyle = "#ffd800";
     ctx.fillText(effects.displayedWeaponName, contentX, cursorY);
     cursorY += weaponGap;
+
+    if (isHolding) {
+      const holdFillColor = holdProgress >= 1 ? "#ffd800" : "#45e06f";
+
+      ctx.font = "bold 14px monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("CHARGE", contentX, cursorY);
+      cursorY += holdBarGap;
+
+      drawBar(
+        contentX,
+        cursorY,
+        panelWidth - 36,
+        10,
+        holdProgress,
+        holdFillColor,
+        "HOLD",
+        holdProgress >= 1 ? "FULL" : `${Math.round(holdProgress * 100)}%`,
+        {
+          labelColor: "rgba(255,255,255,0.72)",
+          valueColor: holdProgress >= 1 ? "#ffd800" : "rgba(255,255,255,0.72)",
+          backgroundColor: "rgba(255,255,255,0.08)",
+          borderColor: "rgba(255,255,255,0.08)",
+          shadowColor: holdProgress >= 1 ? "rgba(255,216,0,0.35)" : "rgba(69,224,111,0.22)",
+          shadowBlur: holdProgress >= 1 ? 12 : 8
+        }
+      );
+      cursorY += holdSectionGap;
+    }
 
     ctx.font = "bold 16px monospace";
     ctx.fillStyle = "#ffffff";

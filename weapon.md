@@ -331,6 +331,37 @@ How it works:
 
 If a weapon does not define `maxHoldTime`, `holdProgress` stays at `0` unless you extend the runtime for a different hold model.
 
+## Client UI Usage
+
+The client currently renders hold feedback in:
+
+- `src/render.js`
+
+The HUD reads hold data from the active slot in:
+
+- `player.weaponState.slots[state.input.activeSlot - 1]`
+
+Fields used by the client:
+
+- `isHolding`
+- `holdProgress`
+- `maxHoldTime`
+
+Current rendering behavior:
+
+- If `isHolding === true`, the HUD shows a charge bar
+- The bar fill width is based on server-provided `holdProgress`
+- The client clamps `holdProgress` to `0..1` for safe rendering
+- Normal charging uses a green bar
+- Full charge uses a yellow bar and `"FULL"` text
+- If `isHolding === false`, the charge bar is not drawn
+
+Important:
+
+- The client does not calculate charge timing itself
+- The client must use server snapshot data only
+- UI code should stay lightweight and render-only
+
 ## 9. How To Create A New Weapon
 
 Follow these steps:
@@ -346,6 +377,7 @@ Follow these steps:
 4. Add the new weapon ID to a tank loadout in `Backend/tanks.json`
 5. Restart the server so the new weapon definitions load
 6. Verify the weapon shape is valid and uses only supported action/condition types
+7. If the weapon is hold-based, verify the client gets meaningful `holdProgress` data for HUD feedback
 
 Practical checklist:
 
@@ -356,6 +388,7 @@ Practical checklist:
 - Are all condition names already implemented in `conditions.js`?
 - If the weapon uses holding, does it cleanly release movement by `hold_end` or `unlock_movement`?
 - If the weapon is charge-based, does it define `maxHoldTime` if client progress UI is needed?
+- Does the active slot expose usable `isHolding` and `holdProgress` values to the snapshot?
 
 ## 10. How To Modify A Weapon
 
@@ -484,6 +517,8 @@ Use this when working on the system:
   Shared projectile runtime behavior after creation
 - `server/entities.js`
   Shared entity registration and cleanup
+- `src/render.js`
+  Client HUD rendering for hold/charge progress
 
 ## Final Guidance
 
