@@ -9,6 +9,7 @@ const { createPlayer } = require("./player");
 const { spawnProjectile } = require("./projectile");
 const { createWeaponSystem } = require("./weapons");
 const { syncPlayerWeaponPublicState } = require("./weapons/runtime");
+const { getOrCreateProfile } = require("./db");
 const {
   parseMessage,
   sanitizeKeys,
@@ -155,6 +156,14 @@ wss.on("connection", (ws) => {
 
     if (validateSessionMessage(data)) {
       const session = getOrCreateSession(data.sessionId);
+
+      if (data.username) {
+        getOrCreateProfile(data.username).then((profile) => {
+          if (sessions[session.playerId]) {
+            sessions[session.playerId].player.profileId = profile.id;
+          }
+        }).catch(err => console.error("Profile error:", err));
+      }
 
       playerId = session.playerId;
       player = session.player;

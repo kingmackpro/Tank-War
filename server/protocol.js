@@ -33,7 +33,8 @@ function validateInputMessage(data) {
 function validateSessionMessage(data) {
   return isPlainObject(data) &&
     data.type === "session" &&
-    (typeof data.sessionId === "string" || data.sessionId === null);
+    (typeof data.sessionId === "string" || data.sessionId === null) &&
+    (typeof data.username === "string" || typeof data.username === "undefined");
 }
 
 function validateWeaponSwitchMessage(data) {

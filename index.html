@@ -18,11 +18,68 @@ display:block;
 margin:auto;
 background:#1a1a1a;
 }
+#login-overlay {
+position: absolute;
+top: 0; left: 0; width: 100vw; height: 100vh;
+background: rgba(17, 17, 17, 0.95);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+color: white;
+font-family: sans-serif;
+z-index: 100;
+}
 
+#login-overlay h1 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  color: #ff3333;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#login-overlay input {
+  padding: 15px;
+  font-size: 1.2rem;
+  background: #222;
+  border: 2px solid #555;
+  color: white;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+#login-overlay button {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  background: #ff3333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+#login-overlay button:hover {
+  background: #ff5555;
+}
+#login-error {
+  color: #ff5555;
+  margin-bottom: 1rem;
+  min-height: 1.2rem;
+}
 </style>
 </head>
 
 <body>
+
+<div id="login-overlay">
+  <h1>Tank War</h1>
+  <div id="login-error"></div>
+  <input type="text" id="username-input" placeholder="Enter Username" maxlength="20" autofocus />
+  <button id="play-button">Play</button>
+</div>
 
 <canvas id="game" width="900" height="600"></canvas>
 

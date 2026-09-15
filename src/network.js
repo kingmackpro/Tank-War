@@ -110,9 +110,16 @@ export function createNetwork(state, handlers) {
     socket = nextSocket;
 
     nextSocket.onopen = () => {
+      let username = undefined;
+      try {
+         const data = JSON.parse(localStorage.getItem("tankwar_player"));
+         if (data && data.username) username = data.username;
+      } catch (e) {}
+
       sendMessage({
         type: "session",
-        sessionId: state.sessionId
+        sessionId: state.sessionId,
+        username
       });
     };
 
