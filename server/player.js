@@ -1,4 +1,4 @@
-const { mapCollision, rectFromCenter } = require("./physics");
+const { intersects, mapCollision, rectFromCenter } = require("./physics");
 const {
   attachPlayerRuntime,
   createPlayerRuntime,
@@ -9,26 +9,41 @@ function cloneTank(template) {
   return JSON.parse(JSON.stringify(template));
 }
 
-function getSpawnPoint(map, tankSize) {
-  if (map.spawnPoints && map.spawnPoints.length > 0) {
-    const index = Math.floor(Math.random() * map.spawnPoints.length);
-    return map.spawnPoints[index];
+function collidesWithPlayer(players, playerId, box, tankSize) {
+  return Object.entries(players || {}).some(([id, player]) => (
+    id !== playerId && intersects(box, rectFromCenter(player.x, player.y, tankSize, tankSize))
+  ));
+}
+
+function getSpawnPoint(map, tankSize, players = {}, playerId = null) {
+  const spawnPoints = map.spawnPoints || [];
+
+  for (let offset = 0; offset < spawnPoints.length; offset += 1) {
+    const spawn = spawnPoints[(Math.floor(Math.random() * spawnPoints.length) + offset) % spawnPoints.length];
+    const box = rectFromCenter(spawn.x, spawn.y, tankSize, tankSize);
+
+    if (!mapCollision(map, box) && !collidesWithPlayer(players, playerId, box, tankSize)) {
+      return spawn;
+    }
   }
 
-  while (true) {
+  for (let attempts = 0; attempts < 200; attempts += 1) {
     const x = 40 + Math.random() * (map.width - 80);
     const y = 40 + Math.random() * (map.height - 80);
     const box = rectFromCenter(x, y, tankSize, tankSize);
 
-    if (!mapCollision(map, box)) {
+    if (!mapCollision(map, box) && !collidesWithPlayer(players, playerId, box, tankSize)) {
       return { x, y };
     }
   }
+
+  // A full map is still playable; use the first configured spawn rather than hang.
+  return spawnPoints[0] || { x: map.width / 2, y: map.height / 2 };
 }
 
-function createPlayer(tanks, weaponDefinitions, map, tankSize) {
+function createPlayer(tanks, weaponDefinitions, map, tankSize, players = {}) {
   const tank = cloneTank(tanks.defaultTank);
-  const spawn = getSpawnPoint(map, tankSize);
+  const spawn = getSpawnPoint(map, tankSize, players);
   const weaponSlotIds = Array.isArray(tank.weaponSlots)
     ? tank.weaponSlots.slice(0, 5)
     : [];
@@ -98,7 +113,7 @@ function updatePlayers(gameState, map, tankSize) {
       tankSize
     );
 
-    if (!mapCollision(map, nextXbox)) {
+    if (!mapCollision(map, nextXbox) && !collidesWithPlayer(gameState.players, id, nextXbox, tankSize)) {
       player.x += dx;
     }
 
@@ -109,13 +124,14 @@ function updatePlayers(gameState, map, tankSize) {
       tankSize
     );
 
-    if (!mapCollision(map, nextYBox)) {
+    if (!mapCollision(map, nextYBox) && !collidesWithPlayer(gameState.players, id, nextYBox, tankSize)) {
       player.y += dy;
     }
   }
 }
 
 module.exports = {
+  collidesWithPlayer,
   createPlayer,
   getSpawnPoint,
   updatePlayers

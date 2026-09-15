@@ -3,7 +3,10 @@ const path = require("path");
 
 const { loadWeaponDefinitions } = require("./weapons/loader");
 
-const PORT = 8080;
+const configuredPort = Number.parseInt(process.env.PORT, 10);
+const PORT = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort < 65536
+  ? configuredPort
+  : 8080;
 const TANK_SIZE = 40;
 const BARREL_LENGTH = 30;
 const SESSION_TTL_MS = 30000;

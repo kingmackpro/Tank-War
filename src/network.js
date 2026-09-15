@@ -1,4 +1,6 @@
-const SERVER_URL = "wss://platinum-contributions-holding-scanned.trycloudflare.com";
+// When served by the included Node server, connect back to that same origin.
+// A hosted client can still use F2 to choose a separate real-time server.
+const SERVER_URL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
 
 export function createNetwork(state, handlers) {
   let socket = null;
@@ -22,7 +24,14 @@ export function createNetwork(state, handlers) {
   }
 
   function handleServerMessage(event) {
-    const data = JSON.parse(event.data);
+    let data;
+
+    try {
+      data = JSON.parse(event.data);
+    } catch (error) {
+      console.warn("Ignoring malformed server message", error);
+      return;
+    }
 
     if (data.type === "session") {
       state.sessionId = data.sessionId;

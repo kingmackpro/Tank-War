@@ -2,9 +2,13 @@
   "name": "tank-war",
   "version": "1.0.0",
   "description": "��#\u0000 \u0000T\u0000a\u0000n\u0000k\u0000-\u0000W\u0000a\u0000r\u0000",
-  "main": "index.js",
+  "main": "server/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "test": "node --test",
+    "check": "node --check server/server.js && node --check server/protocol.js",
+    "verify:local": "node scripts/verify-local.js"
   },
   "repository": {
     "type": "git",

@@ -60,8 +60,8 @@ function broadcastDamage(wss, damageEvent) {
   });
 }
 
-function respawnPlayer(player, getSpawnPoint, map, tankSize) {
-  const spawn = getSpawnPoint(map, tankSize);
+function respawnPlayer(player, getSpawnPoint, map, tankSize, players) {
+  const spawn = getSpawnPoint(map, tankSize, players, player.id);
 
   player.x = spawn.x;
   player.y = spawn.y;
@@ -245,7 +245,7 @@ function updateProjectiles(
       destroyEntity(gameState, projectile.id);
 
       if (player.hp <= 0) {
-        respawnPlayer(player, getSpawnPoint, map, tankSize);
+        respawnPlayer(player, getSpawnPoint, map, tankSize, gameState.players);
       }
 
       break;

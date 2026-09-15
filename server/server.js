@@ -10,6 +10,14 @@ const { spawnProjectile } = require("./projectile");
 const { createWeaponSystem } = require("./weapons");
 const { syncPlayerWeaponPublicState } = require("./weapons/runtime");
 const {
+  parseMessage,
+  sanitizeKeys,
+  validateInputMessage,
+  validateSessionMessage,
+  validateShootMessage,
+  validateWeaponSwitchMessage
+} = require("./protocol");
+const {
   BARREL_LENGTH,
   PORT,
   SESSION_TTL_MS,
@@ -35,67 +43,17 @@ function getContentType(filePath) {
 }
 
 function resolveRequestPath(urlPath) {
-  const cleanPath = urlPath === "/" ? "/index.html" : urlPath;
+  const cleanPath = (urlPath === "/" ? "/index.html" : urlPath).split("?")[0];
   const requestPath = cleanPath.replace(/^\/+/, "");
   const resolvedPath = path.normalize(path.join(ROOT_DIR, requestPath));
 
-  if (!resolvedPath.startsWith(ROOT_DIR)) {
+  const relativePath = path.relative(ROOT_DIR, resolvedPath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     return null;
   }
 
   return resolvedPath;
-}
-
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function parseMessage(message) {
-  try {
-    return JSON.parse(message.toString());
-  } catch (error) {
-    return null;
-  }
-}
-
-function sanitizeKeys(keys) {
-  const nextKeys = {};
-  const allowedKeys = ["w", "a", "s", "d", "arrowleft", "arrowright", " "];
-
-  for (const key of allowedKeys) {
-    nextKeys[key] = Boolean(keys[key]);
-  }
-
-  return nextKeys;
-}
-
-function validateInputMessage(data) {
-  return (
-    isPlainObject(data) &&
-    data.type === "input" &&
-    isPlainObject(data.keys) &&
-    Number.isFinite(data.turretAngle)
-  );
-}
-
-function validateSessionMessage(data) {
-  return (
-    isPlainObject(data) &&
-    data.type === "session" &&
-    (typeof data.sessionId === "string" || data.sessionId === null)
-  );
-}
-
-function validateWeaponSwitchMessage(data) {
-  return (
-    isPlainObject(data) &&
-    data.type === "weapon_switch" &&
-    Number.isInteger(Number(data.slot))
-  );
-}
-
-function validateShootMessage(data) {
-  return isPlainObject(data) && data.type === "shoot";
 }
 
 function clearSessionCleanup(session) {
@@ -133,8 +91,8 @@ function getOrCreateSession(sessionId) {
     };
   }
 
-  const playerId = Math.random().toString(36).substring(2, 9);
-  const player = createPlayer(tanks, weaponDefinitions, map, TANK_SIZE);
+  const playerId = require("crypto").randomUUID();
+  const player = createPlayer(tanks, weaponDefinitions, map, TANK_SIZE, gameState.players);
 
   player.id = playerId;
 
@@ -200,6 +158,7 @@ wss.on("connection", (ws) => {
 
       playerId = session.playerId;
       player = session.player;
+      sessions[playerId].activeSocket = ws;
       syncPlayerWeaponPublicState(player, weaponDefinitions);
       gameState.players[playerId] = player;
 
@@ -211,6 +170,10 @@ wss.on("connection", (ws) => {
     }
 
     if (!player) {
+      return;
+    }
+
+    if (sessions[playerId]?.activeSocket !== ws) {
       return;
     }
 
@@ -241,6 +204,15 @@ wss.on("connection", (ws) => {
       return;
     }
 
+    const session = sessions[playerId];
+
+    // A reconnect can replace this socket before its close event is delivered.
+    if (!session || session.activeSocket !== ws) {
+      return;
+    }
+
+    session.activeSocket = null;
+    player.keys = {};
     delete gameState.players[playerId];
     scheduleSessionCleanup(playerId);
   });
