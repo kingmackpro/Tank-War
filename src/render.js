@@ -409,6 +409,10 @@ export function createRenderer(canvas, ctx, state) {
     const activeWeaponState = player.weaponState?.slots?.[activeSlotIndex] || null;
     const isHolding = Boolean(activeWeaponState?.isHolding);
     const holdProgress = Math.max(0, Math.min(activeWeaponState?.holdProgress || 0, 1));
+    // Only show charge UI when the weapon definition explicitly declares a charge mechanic
+    // (maxHoldTime is a finite positive number). Weapons without charging have maxHoldTime: null.
+    const weaponSupportsCharge = Number.isFinite(activeWeaponState?.maxHoldTime) && activeWeaponState.maxHoldTime > 0;
+    const showChargeUi = isHolding && weaponSupportsCharge;
     const panelX = 14;
     const panelY = 14;
     const panelWidth = 270;
@@ -428,7 +432,7 @@ export function createRenderer(canvas, ctx, state) {
     measureY += barGap;
     measureY += sectionGap;
     measureY += weaponGap;
-    if (isHolding) {
+    if (showChargeUi) {
       measureY += holdSectionGap;
       measureY += holdBarGap;
     }
@@ -497,7 +501,7 @@ export function createRenderer(canvas, ctx, state) {
     ctx.fillText(effects.displayedWeaponName, contentX, cursorY);
     cursorY += weaponGap;
 
-    if (isHolding) {
+    if (showChargeUi) {
       const holdFillColor = holdProgress >= 1 ? "#ffd800" : "#45e06f";
 
       ctx.font = "bold 14px monospace";
