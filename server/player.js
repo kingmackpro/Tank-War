@@ -79,55 +79,29 @@ function createPlayer(tanks, weaponDefinitions, map, tankSize, players = {}) {
   return player;
 }
 
-function updatePlayers(gameState, map, tankSize) {
-  for (const id in gameState.players) {
-    const player = gameState.players[id];
-    const runtime = player.runtime;
-
-    if (runtime?.controlState === "executing") {
-      continue;
-    }
-
-    if (runtime?.controlState === "controlled_entity") {
-      continue;
-    }
-
-    if (runtime?.movementLock.locked || runtime?.movementLock.rotationOnly) {
-      continue;
-    }
-
-    const speed = player.tank.speed;
-
-    let dx = 0;
-    let dy = 0;
-
-    if (player.keys.w) dy -= speed;
-    if (player.keys.s) dy += speed;
-    if (player.keys.a) dx -= speed;
-    if (player.keys.d) dx += speed;
-
-    const nextXbox = rectFromCenter(
-      player.x + dx,
-      player.y,
-      tankSize,
-      tankSize
-    );
-
-    if (!mapCollision(map, nextXbox) && !collidesWithPlayer(gameState.players, id, nextXbox, tankSize)) {
-      player.x += dx;
-    }
-
-    const nextYBox = rectFromCenter(
-      player.x,
-      player.y + dy,
-      tankSize,
-      tankSize
-    );
-
-    if (!mapCollision(map, nextYBox) && !collidesWithPlayer(gameState.players, id, nextYBox, tankSize)) {
-      player.y += dy;
-    }
-  }
+function updatePlayers(gameState, map, tankSize, deltaScale = 1) {
+for (const id in gameState.players) {
+const player = gameState.players[id];
+const runtime = player.runtime;
+if (runtime?.controlState === "executing" || runtime?.controlState === "controlled_entity") continue;
+if (runtime?.movementLock.locked || runtime?.movementLock.rotationOnly) continue;
+const speed = player.tank.speed;
+let dx = 0, dy = 0;
+if (player.keys.w) dy -= speed;
+if (player.keys.s) dy += speed;
+if (player.keys.a) dx -= speed;
+if (player.keys.d) dx += speed;
+const mag = Math.hypot(dx, dy);
+if (mag > 0) {
+const move = speed * deltaScale;
+dx = (dx / mag) * move;
+dy = (dy / mag) * move;
+}
+const nextXbox = rectFromCenter(player.x + dx, player.y, tankSize, tankSize);
+if (!mapCollision(map, nextXbox) && !collidesWithPlayer(gameState.players, id, nextXbox, tankSize)) player.x += dx;
+const nextYBox = rectFromCenter(player.x, player.y + dy, tankSize, tankSize);
+if (!mapCollision(map, nextYBox) && !collidesWithPlayer(gameState.players, id, nextYBox, tankSize)) player.y += dy;
+}
 }
 
 module.exports = {
