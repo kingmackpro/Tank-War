@@ -148,109 +148,47 @@ function updateProjectileHoming(projectile, gameState) {
   projectile.vy = (projectile.vy / normalizedSpeed) * projectile.speed;
 }
 
-function updateProjectiles(
-  gameState,
-  map,
-  wss,
-  tankSize,
-  getSpawnPoint
-) {
-  for (let i = gameState.projectiles.length - 1; i >= 0; i -= 1) {
-    const projectile = gameState.projectiles[i];
-    const previousX = projectile.x;
-    const previousY = projectile.y;
-
-    updateProjectileHoming(projectile, gameState);
-
-    projectile.x += projectile.vx;
-    projectile.y += projectile.vy;
-    projectile.distanceTravelled += Math.hypot(projectile.vx, projectile.vy);
-
-    if (projectile.expiresAt && Date.now() >= projectile.expiresAt) {
-      destroyEntity(gameState, projectile.id);
-      continue;
-    }
-
-    if (
-      Number.isFinite(projectile.range) &&
-      projectile.distanceTravelled >= projectile.range
-    ) {
-      destroyEntity(gameState, projectile.id);
-      continue;
-    }
-
-    const projectileBox = rectFromCenter(
-      projectile.x,
-      projectile.y,
-      projectile.size,
-      projectile.size
-    );
-
-    if (!projectile.ignore.walls && mapCollision(map, projectileBox)) {
-      if (projectile.bounceRemaining > 0) {
-        const xCollision = mapCollision(
-          map,
-          rectFromCenter(previousX + projectile.vx, previousY, projectile.size, projectile.size)
-        );
-        const yCollision = mapCollision(
-          map,
-          rectFromCenter(previousX, previousY + projectile.vy, projectile.size, projectile.size)
-        );
-
-        if (xCollision) {
-          projectile.vx *= -1;
-        }
-
-        if (yCollision) {
-          projectile.vy *= -1;
-        }
-
-        if (!xCollision && !yCollision) {
-          projectile.vx *= -1;
-          projectile.vy *= -1;
-        }
-
-        projectile.x = previousX + projectile.vx;
-        projectile.y = previousY + projectile.vy;
-        projectile.bounceRemaining -= 1;
-        continue;
-      }
-
-      destroyEntity(gameState, projectile.id);
-      continue;
-    }
-
-    for (const id in gameState.players) {
-      const player = gameState.players[id];
-      player.id = id;
-
-      if (id === projectile.ownerId && projectile.ignore.owner) {
-        continue;
-      }
-
-      const tankBox = rectFromCenter(player.x, player.y, tankSize, tankSize);
-
-      if (!intersects(projectileBox, tankBox)) {
-        continue;
-      }
-
-      if (shieldBlocksDamage(gameState, player, projectile)) {
-        destroyEntity(gameState, projectile.id);
-        break;
-      }
-
-      const damageEvent = applyProjectileDamage(projectile, player, id);
-      broadcastDamage(wss, damageEvent);
-
-      destroyEntity(gameState, projectile.id);
-
-      if (player.hp <= 0) {
-        respawnPlayer(player, getSpawnPoint, map, tankSize, gameState.players);
-      }
-
-      break;
-    }
-  }
+unction updateProjectiles(gameState, map, wss, tankSize, getSpawnPoint, deltaScale = 1) {
+for (let i = gameState.projectiles.length - 1; i >= 0; i -= 1) {
+const p = gameState.projectiles[i];
+const prevX = p.x, prevY = p.y;
+const mx = p.vx * deltaScale, my = p.vy * deltaScale;
+updateProjectileHoming(p, gameState);
+p.x += mx; p.y += my;
+p.distanceTravelled += Math.hypot(p.vx, p.vy) * deltaScale;
+if (p.expiresAt && Date.now() >= p.expiresAt) { destroyEntity(gameState, p.id); continue; }
+if (Number.isFinite(p.range) && p.distanceTravelled >= p.range) { destroyEntity(gameState, p.id); continue; }
+const pBox = rectFromCenter(p.x, p.y, p.size, p.size);
+if (!p.ignore.walls && mapCollision(map, pBox)) {
+if (p.bounceRemaining > 0) {
+const xHit = mapCollision(map, rectFromCenter(prevX + mx, prevY, p.size, p.size));
+const yHit = mapCollision(map, rectFromCenter(prevX, prevY + my, p.size, p.size));
+if (xHit) p.vx *= -1;
+if (yHit) p.vy *= -1;
+if (!xHit && !yHit) { p.vx *= -1; p.vy *= -1; }
+p.x = prevX + p.vx * deltaScale;
+p.y = prevY + p.vy * deltaScale;
+p.bounceRemaining -= 1;
+continue;
+}
+destroyEntity(gameState, p.id);
+continue;
+}
+for (const id in gameState.players) {
+const player = gameState.players[id];
+player.id = id;
+if (id === p.ownerId && p.ignore.owner) continue;
+const tankBox = rectFromCenter(player.x, player.y, tankSize, tankSize);
+if (!intersects(pBox, tankBox)) continue;
+if (shieldBlocksDamage(gameState, player, p)) {
+destroyEntity(gameState, p.id); break; }
+const ev = applyProjectileDamage(p, player, id);
+broadcastDamage(wss, ev);
+destroyEntity(gameState, p.id);
+if (player.hp <= 0) respawnPlayer(player, getSpawnPoint, map, tankSize, gameState.players);
+break;
+}
+}
 }
 
 module.exports = {
