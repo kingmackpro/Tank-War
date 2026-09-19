@@ -32,7 +32,7 @@ async function getOrCreateProfile(username) {
     if (!profile) {
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
-        .insert([{ username }])
+        .insert([{ id: crypto.randomUUID(), username }])
         .select()
         .single();
 
@@ -95,7 +95,7 @@ async function saveMatchResult(matchData) {
         });
 
       if (updateError) {
-         console.error(`Failed to update stats for ${playerStat.profileId}:`, updateError);
+        console.error(`Failed to update stats for ${playerStat.profileId}:`, updateError);
       }
     }
   } catch (err) {
