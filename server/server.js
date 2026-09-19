@@ -30,7 +30,7 @@ const {
   weaponDefinitions
 } = require("./state");
 
-const ROOT_DIR = path.join(__dirname, "..");
+const PUBLIC_DIR = path.join(__dirname, "..", "public", "client");
 
 function getContentType(filePath) {
   const extension = path.extname(filePath);
@@ -46,9 +46,9 @@ function getContentType(filePath) {
 function resolveRequestPath(urlPath) {
   const cleanPath = (urlPath === "/" ? "/index.html" : urlPath).split("?")[0];
   const requestPath = cleanPath.replace(/^\/+/, "");
-  const resolvedPath = path.normalize(path.join(ROOT_DIR, requestPath));
+  const resolvedPath = path.normalize(path.join(PUBLIC_DIR, requestPath));
 
-  const relativePath = path.relative(ROOT_DIR, resolvedPath);
+  const relativePath = path.relative(PUBLIC_DIR, resolvedPath);
 
   if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     return null;
@@ -130,7 +130,7 @@ server.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
 });
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server, maxPayload: 16 * 1024 });
 const weaponSystem = createWeaponSystem({
   barrelLength: BARREL_LENGTH,
   destroyEntity: (entityId) => destroyEntity(gameState, entityId),
@@ -143,16 +143,26 @@ const weaponSystem = createWeaponSystem({
   weaponDefinitions
 });
 
-wss.on("connection", (ws) => {
-  let player = null;
-  let playerId = null;
+ws.on("connection", (ws) => {
+let player = null;
+let playerId = null;
+let windowStart = Date.now();
+let msgCount = 0;
 
-  ws.on("message", (message) => {
-    const data = parseMessage(message);
-
-    if (!data) {
-      return;
-    }
+ws.on("message", (message) => {
+const now = Date.now();
+if (now - windowStart >= 1000) {
+windowStart = now;
+msgCount = 0;
+}
+msgCount += 1;
+if (msgCount > 120) {
+ws.close(1008, "rate limit");
+return;
+}
+const data = parseMessage(message);
+// rest of ur handler stays
+});
 
     if (validateSessionMessage(data)) {
       const session = getOrCreateSession(data.sessionId);
