@@ -148,7 +148,7 @@ function updateProjectileHoming(projectile, gameState) {
   projectile.vy = (projectile.vy / normalizedSpeed) * projectile.speed;
 }
 
-unction updateProjectiles(gameState, map, wss, tankSize, getSpawnPoint, deltaScale = 1) {
+function updateProjectiles(gameState, map, wss, tankSize, getSpawnPoint, deltaScale = 1) {
 for (let i = gameState.projectiles.length - 1; i >= 0; i -= 1) {
 const p = gameState.projectiles[i];
 const prevX = p.x, prevY = p.y;
