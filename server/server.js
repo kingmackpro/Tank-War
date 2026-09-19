@@ -1,128 +1,262 @@
-Y29uc3QgaHR0cCA9IHJlcXVpcmUoImh0dHAiKTsKY29uc3QgZnMgPSByZXF1
-aXJlKCJmcyIpOwpjb25zdCBwYXRoID0gcmVxdWlyZSgicGF0aCIpOwpjb25z
-dCBXZWJTb2NrZXQgPSByZXF1aXJlKCJ3cyIpOwoKY29uc3QgeyBkZXN0cm95
-RW50aXR5LCBnZXRFbnRpdHksIHJlZ2lzdGVyRW50aXR5IH0gPSByZXF1aXJl
-KCIuL2VudGl0aWVzIik7CmNvbnN0IHsgY3JlYXRlR2FtZUxvb3AgfSA9IHJl
-cXVpcmUoIi4vZ2FtZUxvb3AiKTsKY29uc3QgeyBjcmVhdGVQbGF5ZXIgfSA9
-IHJlcXVpcmUoIi4vcGxheWVyIik7CmNvbnN0IHsgc3Bhd25Qcm9qZWN0aWxl
-IH0gPSByZXF1aXJlKCIuL3Byb2plY3RpbGUiKTsKY29uc3QgeyBjcmVhdGVX
-ZWFwb25TeXN0ZW0gfSA9IHJlcXVpcmUoIi4vd2VhcG9ucyIpOwpjb25zdCB7
-IHN5bmNQbGF5ZXJXZWFwb25QdWJsaWNTdGF0ZSB9ID0gcmVxdWlyZSgiLi93
-ZWFwb25zL3J1bnRpbWUiKTsKY29uc3QgeyBnZXRPckNyZWF0ZVByb2ZpbGUg
-fSA9IHJlcXVpcmUoIi4vZGIiKTsKY29uc3QgewogIHBhcnNlTWVzc2FnZSwK
-ICBzYW5pdGl6ZUtleXMsCiAgdmFsaWRhdGVJbnB1dE1lc3NhZ2UsCiAgdmFs
-aWRhdGVTZXNzaW9uTWVzc2FnZSwKICB2YWxpZGF0ZVNob290TWVzc2FnZSwK
-ICB2YWxpZGF0ZVdlYXBvblN3aXRjaE1lc3NhZ2UKfSA9IHJlcXVpcmUoIi4v
-cHJvdG9jb2wiKTsKY29uc3QgewogIEJBUlJFTF9MRU5HVEgsCiAgUE9SVCwK
-ICBTRVNTSU9OX1RUTF9NUywKICBUQU5LX1NJWkUsCiAgZ2FtZVN0YXRlLAog
-IG1hcCwKICBzZXNzaW9ucywKICB0YW5rcywKICB3ZWFwb25EZWZpbml0aW9u
-cwp9ID0gcmVxdWlyZSgiLi9zdGF0ZSIpOwoKY29uc3QgUFVCTElDX0RJUiA9
-IHBhdGguam9pbihfX2Rpcm5hbWUsICIuLiIsICJwdWJsaWMiLCAiY2xpZW50
-Iik7CgpmdW5jdGlvbiBnZXRDb250ZW50VHlwZShmaWxlUGF0aCkgewogIGNv
-bnN0IGV4dGVuc2lvbiA9IHBhdGguZXh0bmFtZShmaWxlUGF0aCk7CgogIGlm
-IChleHRlbnNpb24gPT09ICIuaHRtbCIpIHJldHVybiAidGV4dC9odG1sIjsK
-ICBpZiAoZXh0ZW5zaW9uID09PSAiLmpzIikgcmV0dXJuICJ0ZXh0L2phdmFz
-Y3JpcHQiOwogIGlmIChleHRlbnNpb24gPT09ICIuanNvbiIpIHJldHVybiAi
-YXBwbGljYXRpb24vanNvbiI7CiAgaWYgKGV4dGVuc2lvbiA9PT0gIi5jc3Mi
-KSByZXR1cm4gInRleHQvY3NzIjsKCiAgcmV0dXJuICJ0ZXh0L3BsYWluIjsK
-fQoKZnVuY3Rpb24gcmVzb2x2ZVJlcXVlc3RQYXRoKHVybFBhdGgpIHsKICBj
-b25zdCBjbGVhblBhdGggPSAodXJsUGF0aCA9PT0gIi8iID8gIi9pbmRleC5o
-dG1sIiA6IHVybFBhdGgpLnNwbGl0KCI/IilbMF07CiAgY29uc3QgcmVxdWVz
-dFBhdGggPSBjbGVhblBhdGgucmVwbGFjZSgvXlwvKy8sICIiKTsKICBjb25z
-dCByZXNvbHZlZFBhdGggPSBwYXRoLm5vcm1hbGl6ZShwYXRoLmpvaW4oUFVC
-TElDX0RJUiwgcmVxdWVzdFBhdGgpKTsKCiAgY29uc3QgcmVsYXRpdmVQYXRo
-ID0gcGF0aC5yZWxhdGl2ZShQVUJMSUNfRElSLCByZXNvbHZlZFBhdGgpOwoK
-ICBpZiAocmVsYXRpdmVQYXRoLnN0YXJ0c1dpdGgoIi4uIikgfHwgcGF0aC5p
-c0Fic29sdXRlKHJlbGF0aXZlUGF0aCkpIHsKICAgIHJldHVybiBudWxsOwog
-IH0KCiAgcmV0dXJuIHJlc29sdmVkUGF0aDsKfQoKZnVuY3Rpb24gY2xlYXJT
-ZXNzaW9uQ2xlYW51cChzZXNzaW9uKSB7CiAgaWYgKHNlc3Npb24uY2xlYW51
-cFRpbWVyKSB7CiAgICBjbGVhclRpbWVvdXQoc2Vzc2lvbi5jbGVhbnVwVGlt
-ZXIpOwogICAgc2Vzc2lvbi5jbGVhbnVwVGltZXIgPSBudWxsOwogIH0KfQoK
-ZnVuY3Rpb24gc2NoZWR1bGVTZXNzaW9uQ2xlYW51cChwbGF5ZXJJZCkgewog
-IGNvbnN0IHNlc3Npb24gPSBzZXNzaW9uc1twbGF5ZXJJZF07CgogIGlmICgh
-c2Vzc2lvbikgewogICAgcmV0dXJuOwogIH0KCiAgY2xlYXJTZXNzaW9uQ2xl
-YW51cChzZXNzaW9uKTsKCiAgc2Vzc2lvbi5jbGVhbnVwVGltZXIgPSBzZXRU
-aW1lb3V0KCgpID0+IHsKICAgIGlmIChzZXNzaW9uc1twbGF5ZXJJZF0gPT09
-IHNlc3Npb24pIHsKICAgICAgZGVsZXRlIHNlc3Npb25zW3BsYXllcklkXTsK
-ICAgIH0KICB9LCBTRVNTSU9OX1RUTF9NUyk7Cn0KCmZ1bmN0aW9uIGdldE9y
-Q3JlYXRlU2Vzc2lvbihzZXNzaW9uSWQpIHsKICBpZiAoc2Vzc2lvbklkICYm
-IHNlc3Npb25zW3Nlc3Npb25JZF0pIHsKICAgIGNvbnN0IHNlc3Npb24gPSBz
-ZXNzaW9uc1tzZXNzaW9uSWRdOwogICAgY2xlYXJTZXNzaW9uQ2xlYW51cChz
-ZXNzaW9uKTsKICAgIHNlc3Npb24ucGxheWVyLmlkID0gc2Vzc2lvbklkOwoK
-ICAgIHJldHVybiB7CiAgICAgIHBsYXllcklkOiBzZXNzaW9uSWQsCiAgICAg
-IHBsYXllcjogc2Vzc2lvbi5wbGF5ZXIKICAgIH07CiAgfQoKICBjb25zdCBw
-bGF5ZXJJZCA9IHJlcXVpcmUoImNyeXB0byIpLnJhbmRvbVVVSUQoKTsKICBj
-b25zdCBwbGF5ZXIgPSBjcmVhdGVQbGF5ZXIodGFua3MsIHdlYXBvbkRlZmlu
-aXRpb25zLCBtYXAsIFRBTktfU0laRSwgZ2FtZVN0YXRlLnBsYXllcnMpOwoK
-ICBwbGF5ZXIuaWQgPSBwbGF5ZXJJZDsKCiAgc2Vzc2lvbnNbcGxheWVySWRd
-ID0gewogICAgcGxheWVyLAogICAgY2xlYW51cFRpbWVyOiBudWxsCiAgfTsK
-CiAgcmV0dXJuIHsgcGxheWVySWQsIHBsYXllciB9Owp9Cgpjb25zdCBzZXJ2
-ZXIgPSBodHRwLmNyZWF0ZVNlcnZlcigocmVxLCByZXMpID0+IHsKICBjb25z
-dCBmaWxlUGF0aCA9IHJlc29sdmVSZXF1ZXN0UGF0aChyZXEudXJsIHx8ICIv
-Iik7CgogIGlmICghZmlsZVBhdGgpIHsKICAgIHJlcy53cml0ZUhlYWQoNDAz
-KTsKICAgIHJlcy5lbmQoIkZvcmJpZGRlbiIpOwogICAgcmV0dXJuOwogIH0K
-CiAgZnMucmVhZEZpbGUoZmlsZVBhdGgsIChlcnJvciwgZGF0YSkgPT4gewog
-ICAgaWYgKGVycm9yKSB7CiAgICAgIHJlcy53cml0ZUhlYWQoNDA0KTsKICAg
-ICAgcmVzLmVuZCgiTm90IGZvdW5kIik7CiAgICAgIHJldHVybjsKICAgIH0K
-CiAgICByZXMud3JpdGVIZWFkKDIwMCwgeyAiQ29udGVudC1UeXBlIjogZ2V0
-Q29udGVudFR5cGUoZmlsZVBhdGgpIH0pOwogICAgcmVzLmVuZChkYXRhKTsK
-ICB9KTsKfSk7CgpzZXJ2ZXIubGlzdGVuKFBPUlQsICgpID0+IHsKICBjb25z
-b2xlLmxvZyhgU2VydmVyIHJ1bm5pbmcgb24gJHtQT1JUfWApOwp9KTsKCmNv
-bnN0IHdzcyA9IG5ldyBXZWJTb2NrZXQuU2VydmVyKHsgc2VydmVyLCBtYXhQ
-YXlsb2FkOiAxNiAqIDEwMjQgfSk7CmNvbnN0IHdlYXBvblN5c3RlbSA9IGNy
-ZWF0ZVdlYXBvblN5c3RlbSh7CiAgYmFycmVsTGVuZ3RoOiBCQVJSRUxfTEVO
-R1RILAogIGRlc3Ryb3lFbnRpdHk6IChlbnRpdHlJZCkgPT4gZGVzdHJveUVu
-dGl0eShnYW1lU3RhdGUsIGVudGl0eUlkKSwKICBnYW1lU3RhdGUsCiAgZ2V0
-RW50aXR5OiAoZW50aXR5SWQpID0+IGdldEVudGl0eShnYW1lU3RhdGUsIGVu
-dGl0eUlkKSwKICBtYXAsCiAgcmVnaXN0ZXJFbnRpdHk6IChlbnRpdHksIHBy
-ZWZpeCkgPT4gcmVnaXN0ZXJFbnRpdHkoZ2FtZVN0YXRlLCBlbnRpdHksIHBy
-ZWZpeCksCiAgc3Bhd25Qcm9qZWN0aWxlOiAoY29uZmlnKSA9PiBzcGF3blBy
-b2plY3RpbGUoZ2FtZVN0YXRlLCBjb25maWcpLAogIHRhbmtTaXplOiBUQU5L
-X1NJWkUsCiAgd2VhcG9uRGVmaW5pdGlvbnMKfSk7Cgp3c3Mub24oImNvbm5l
-Y3Rpb24iLCAod3MpID0+IHsKbGV0IHBsYXllciA9IG51bGw7CmxldCBwbGF5
-ZXJJZCA9IG51bGw7CmxldCB3aW5kb3dTdGFydCA9IERhdGUubm93KCk7Cmxl
-dCBtc2dDb3VudCA9IDA7Cgp3cy5vbigibWVzc2FnZSIsIChtZXNzYWdlKSA9
-PiB7CmNvbnN0IG5vdyA9IERhdGUubm93KCk7CmlmIChub3cgLSB3aW5kb3dT
-dGFydCA+PSAxMDAwKSB7CndpbmRvd1N0YXJ0ID0gbm93Owptc2dDb3VudCA9
-IDA7Cn0KbXNnQ291bnQgKz0gMTsKaWYgKG1zZ0NvdW50ID4gMTIwKSB7Cndz
-LmNsb3NlKDEwMDgsICJyYXRlIGxpbWl0Iik7CnJldHVybjsKfQpjb25zdCBk
-YXRhID0gcGFyc2VNZXNzYWdlKG1lc3NhZ2UpOwovLyByZXN0IG9mIHVyIGhh
-bmRsZXIgc3RheXMKCgogICAgaWYgKHZhbGlkYXRlU2Vzc2lvbk1lc3NhZ2UoZGF0YSkpIHsKICAgICAgY29uc3Qgc2Vzc2lvbiA9IGdldE9yQ3JlYXRlU2Vzc2lvbihkYXRhLnNlc3Npb25JZCk7CgogICAgICBpZiAoZGF0YS51c2VybmFtZSkgewogICAgICAgIGdldE9yQ3JlYXRlUHJvZmlsZShkYXRhLnVzZXJuYW1lKS50aGVuKChwcm9maWxlKSA9PiB7CiAgICAgICAgICBpZiAoc2Vzc2lvbnNbc2Vzc2lvbi5wbGF5ZXJJZF0pIHsKICAgICAgICAgICAgc2Vzc2lvbnNb c2Vzc2lvbi5wbGF5ZXJJZF0ucGxheWVyLnByb2ZpbGVJZCA9IHByb2ZpbGUu
-aWQ7CiAgICAgICAgICB9CiAgICAgICAgfSkuY2F0Y2goZXJyID0+IGNvbnNv
-bGUuZXJyb3IoIlByb2ZpbGUgZXJyb3I6IiwgZXJyKSk7CiAgICAgIH0KCiAg
-ICAgIHBsYXllcklkID0gc2Vzc2lvbi5wbGF5ZXJJZDsKICAgICAgcGxheWVy
-ID0gc2Vzc2lvbi5wbGF5ZXI7ICAgICAgc2Vzc2lvbnNbcGxheWVySWRdLmFj
-dGl2ZVNvY2tldCA9IHdzOwogICAgICBzeW5jUGxheWVyV2VhcG9uUHVibGlj
-U3RhdGUocGxheWVyLCB3ZWFwb25EZWZpbml0aW9ucyk7CiAgICAgIGdhbWVT
-dGF0ZS5wbGF5ZXJzW3BsYXllcklkXSA9IHBsYXllcjsKCiAgICAgIHdzLnNl
-bmQoSlNPTi5zdHJpbmdpZnkoeyB0eXBlOiAic2Vzc2lvbiIsIHNlc3Npb24
-SWQ6IHBsYXllcklkIH0pKTsKICAgICAgd3Muc2VuZChKU09OLnN0cmluZ2lm
-eSh7IHR5cGU6ICJpbml0IiwgaWQ6IHBsYXllcklkIH0pKTsKICAgICAgd3Mu
-c2VuZChKU09OLnN0cmluZ2lmeSh7IHR5cGU6ICJtYXAiLCBkYXRhOiBtYXAg
-fSkpOwoKICAgICAgcmV0dXJuOwogICAgfQoKICAgIGlmICghcGxheWVyKSB7
-CiAgICAgIHJldHVybjsKICAgIH0KCiAgICBpZiAoc2Vzc2lvbnNbcGxheWVy
-SWRdPy5hY3RpdmVTb2NrZXQgIT09IHdzKSB7CiAgICAgIHJldHVybjsKICAg
-IH0KCiAgICBpZiAodmFsaWRhdGVJbnB1dE1lc3NhZ2UoZGF0YSkpIHsKICAg
-ICAgcGxheWVyLmtleXMgPSBzYW5pdGl6ZUtleXMoZGF0YS5rZXlzKTsKICAg
-ICAgcGxheWVyLnR1cnJldEFuZ2xlID0gZGF0YS50dXJyZXRBbmdsZTsKICAg
-ICAgcmV0dXJuOwogICAgfQoKICAgIGlmICh2YWxpZGF0ZVdlYXBvblN3aXRj
-aE1lc3NhZ2UoZGF0YSkpIHsKICAgICAgY29uc3Qgc2xvdCA9IE51bWJlcihk
-YXRhLnNsb3QpOwogICAgICBjb25zdCBpbmRleCA9IHNsb3QgLSAxOwoKICAg
-ICAgaWYgKGluZGV4ID49IDAgJiYgaW5kZXggPCA1KSB7CiAgICAgICAgd2Vh
-cG9uU3lzdGVtLmhhbmRsZVdlYXBvblN3aXRjaChwbGF5ZXIsIGluZGV4KTsK
-ICAgICAgfQoKICAgICAgcmV0dXJuOwogICAgfQoKICAgIGlmICh2YWxpZGF0
-ZVNob290TWVzc2FnZShkYXRhKSkgewogICAgICB3ZWFwb25TeXN0ZW0uaGFu
-ZGxlU2hvb3RJbnB1dChwbGF5ZXIpOwogICAgfQogIH0pOwoKICB3cy5vbigi
-Y2xvc2UiLCAoKSA9PiB7CiAgICBpZiAoIXBsYXllcklkKSB7CiAgICAgIHJl
-dHVybjsKICAgIH0KCiAgICBjb25zdCBzZXNzaW9uID0gc2Vzc2lvbnNbcGxh
-eWVySWRdOwoKICAgIC8vIEEgcmVjb25uZWN0IGNhbiByZXBsYWNlIHRoaXMg
-c29ja2V0IGJlZm9yZSBpdHMgY2xvc2UgZXZlbnQgaXMgZGVsaXZlcmVkLgog
-ICAgaWYgKCFzZXNzaW9uIHx8IHNlc3Npb24uYWN0aXZlU29ja2V0ICE9PSB3
-cykgewogICAgICByZXR1cm47CiAgICB9CgogICAgc2Vzc2lvbi5hY3RpdmVT
-b2NrZXQgPSBudWxsOwogICAgcGxheWVyLmtleXMgPSB7fTsKICAgIGRlbGV0
-ZSBnYW1lU3RhdGUucGxheWVyc1twbGF5ZXJJZF07CiAgICBzY2hlZHVsZVNl
-c3Npb25DbGVhbnVwKHBsYXllcklkKTsKICB9KTsKCmNvbnN0IHVwZGF0ZUdh
-bWUgPSBjcmVhdGVHYW1lTG9vcCh7CiAgZ2FtZVN0YXRlLAogIGdldFNwYXdu
-UG9pbnQ6IHJlcXVpcmUoIi4vcGxheWVyIikuZ2V0U3Bhd25Qb2ludCwKICBt
-YXAsCiAgdGFua1NpemU6IFRBTktfU0laRSwKICB3ZWFwb25TeXN0ZW0sCiAg
-d3NzCn0pOwoKc2V0SW50ZXJ2YWwodXBkYXRlR2FtZSwgMTAwMCAvIDYwKTsK
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const WebSocket = require("ws");
+
+const { destroyEntity, getEntity, registerEntity } = require("./entities");
+const { createGameLoop } = require("./gameLoop");
+const { createPlayer } = require("./player");
+const { spawnProjectile } = require("./projectile");
+const { createWeaponSystem } = require("./weapons");
+const { syncPlayerWeaponPublicState } = require("./weapons/runtime");
+const { getOrCreateProfile } = require("./db");
+const {
+  parseMessage,
+  sanitizeKeys,
+  validateInputMessage,
+  validateSessionMessage,
+  validateShootMessage,
+  validateWeaponSwitchMessage
+} = require("./protocol");
+const {
+  BARREL_LENGTH,
+  PORT,
+  SESSION_TTL_MS,
+  TANK_SIZE,
+  gameState,
+  map,
+  sessions,
+  tanks,
+  weaponDefinitions
+} = require("./state");
+
+const ROOT_DIR = path.join(__dirname, "..");
+
+function getContentType(filePath) {
+  const extension = path.extname(filePath);
+
+  if (extension === ".html") return "text/html";
+  if (extension === ".js") return "text/javascript";
+  if (extension === ".json") return "application/json";
+  if (extension === ".css") return "text/css";
+
+  return "text/plain";
+}
+
+function resolveRequestPath(urlPath) {
+  const cleanPath = (urlPath === "/" ? "/index.html" : urlPath).split("?")[0];
+  const requestPath = cleanPath.replace(/^\/+/, "");
+
+  if (
+    requestPath.startsWith("server/") ||
+    requestPath.startsWith("Backend/") ||
+    requestPath.startsWith("scripts/") ||
+    requestPath.startsWith("test/") ||
+    requestPath.startsWith(".git/") ||
+    requestPath.split("/").some((segment) => segment.startsWith("."))
+  ) {
+    return null;
+  }
+
+  const resolvedPath = path.normalize(path.join(ROOT_DIR, requestPath));
+  const relativePath = path.relative(ROOT_DIR, resolvedPath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    return null;
+  }
+
+  return resolvedPath;
+}
+
+function clearSessionCleanup(session) {
+  if (session.cleanupTimer) {
+    clearTimeout(session.cleanupTimer);
+    session.cleanupTimer = null;
+  }
+}
+
+function scheduleSessionCleanup(playerId) {
+  const session = sessions[playerId];
+
+  if (!session) {
+    return;
+  }
+
+  clearSessionCleanup(session);
+
+  session.cleanupTimer = setTimeout(() => {
+    if (sessions[playerId] === session) {
+      delete sessions[playerId];
+    }
+  }, SESSION_TTL_MS);
+}
+
+function getOrCreateSession(sessionId) {
+  if (sessionId && sessions[sessionId]) {
+    const session = sessions[sessionId];
+    clearSessionCleanup(session);
+    session.player.id = sessionId;
+
+    return {
+      playerId: sessionId,
+      player: session.player
+    };
+  }
+
+  const playerId = require("crypto").randomUUID();
+  const player = createPlayer(tanks, weaponDefinitions, map, TANK_SIZE, gameState.players);
+
+  player.id = playerId;
+
+  sessions[playerId] = {
+    player,
+    cleanupTimer: null
+  };
+
+  return { playerId, player };
+}
+
+const server = http.createServer((req, res) => {
+  const filePath = resolveRequestPath(req.url || "/");
+
+  if (!filePath) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
+  }
+
+  fs.readFile(filePath, (error, data) => {
+    if (error) {
+      res.writeHead(404);
+      res.end("Not found");
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": getContentType(filePath) });
+    res.end(data);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
+});
+
+const wss = new WebSocket.Server({ server, maxPayload: 16 * 1024 });
+const weaponSystem = createWeaponSystem({
+  barrelLength: BARREL_LENGTH,
+  destroyEntity: (entityId) => destroyEntity(gameState, entityId),
+  gameState,
+  getEntity: (entityId) => getEntity(gameState, entityId),
+  map,
+  registerEntity: (entity, prefix) => registerEntity(gameState, entity, prefix),
+  spawnProjectile: (config) => spawnProjectile(gameState, config),
+  tankSize: TANK_SIZE,
+  weaponDefinitions
+});
+
+wss.on("connection", (ws) => {
+  let player = null;
+  let playerId = null;
+  let windowStart = Date.now();
+  let msgCount = 0;
+
+  ws.on("message", (message) => {
+    const now = Date.now();
+
+    if (now - windowStart >= 1000) {
+      windowStart = now;
+      msgCount = 0;
+    }
+
+    msgCount += 1;
+
+    if (msgCount > 120) {
+      ws.close(1008, "rate limit");
+      return;
+    }
+
+    const data = parseMessage(message);
+
+    if (validateSessionMessage(data)) {
+      const session = getOrCreateSession(data.sessionId);
+
+      if (data.username) {
+        getOrCreateProfile(data.username).then((profile) => {
+          if (sessions[session.playerId]) {
+            sessions[session.playerId].player.profileId = profile.id;
+          }
+        }).catch((err) => console.error("Profile error:", err));
+      }
+
+      playerId = session.playerId;
+      player = session.player;
+      sessions[playerId].activeSocket = ws;
+      syncPlayerWeaponPublicState(player, weaponDefinitions);
+      gameState.players[playerId] = player;
+
+      ws.send(JSON.stringify({ type: "session", sessionId: playerId }));
+      ws.send(JSON.stringify({ type: "init", id: playerId }));
+      ws.send(JSON.stringify({ type: "map", data: map }));
+
+      return;
+    }
+
+    if (!player) {
+      return;
+    }
+
+    if (sessions[playerId]?.activeSocket !== ws) {
+      return;
+    }
+
+    if (validateInputMessage(data)) {
+      player.keys = sanitizeKeys(data.keys);
+      player.turretAngle = data.turretAngle;
+      return;
+    }
+
+    if (validateWeaponSwitchMessage(data)) {
+      const slot = Number(data.slot);
+      const index = slot - 1;
+
+      if (index >= 0 && index < 5) {
+        weaponSystem.handleWeaponSwitch(player, index);
+      }
+
+      return;
+    }
+
+    if (validateShootMessage(data)) {
+      weaponSystem.handleShootInput(player);
+    }
+  });
+
+  ws.on("close", () => {
+    if (!playerId) {
+      return;
+    }
+
+    const session = sessions[playerId];
+
+    // A reconnect can replace this socket before its close event is delivered.
+    if (!session || session.activeSocket !== ws) {
+      return;
+    }
+
+    session.activeSocket = null;
+    player.keys = {};
+    delete gameState.players[playerId];
+    scheduleSessionCleanup(playerId);
+  });
+});
+
+const updateGame = createGameLoop({
+  gameState,
+  getSpawnPoint: require("./player").getSpawnPoint,
+  map,
+  tankSize: TANK_SIZE,
+  weaponSystem,
+  wss
+});
+
+setInterval(updateGame, 1000 / 60);
