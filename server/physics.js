@@ -1,3 +1,4 @@
+const mapObjectsCache = new WeakMap();
 function rectFromCenter(cx, cy, w, h) {
   return {
     x: cx - w / 2,
@@ -17,11 +18,10 @@ function intersects(a, b) {
 }
 
 function getMapObjects(map) {
-  return [
-    ...(map.walls || []),
-    ...(map.stones || []),
-    ...(map.covers || [])
-  ];
+if (!mapObjectsCache.has(map)) {
+mapObjectsCache.set(map, [...(map.walls || []), ...(map.stones || []), ...(map.covers || [])]);
+}
+return mapObjectsCache.get(map);
 }
 
 function mapCollision(map, box) {
