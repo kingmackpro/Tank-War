@@ -235,7 +235,6 @@ const data = parseMessage(message);
     delete gameState.players[playerId];
     scheduleSessionCleanup(playerId);
   });
-});
 
 const updateGame = createGameLoop({
   gameState,
