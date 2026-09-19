@@ -143,7 +143,7 @@ const weaponSystem = createWeaponSystem({
   weaponDefinitions
 });
 
-wws.on("connection", (ws) => {
+wss.on("connection", (ws) => {
 let player = null;
 let playerId = null;
 let windowStart = Date.now();
