@@ -20,3 +20,4 @@ const packet = JSON.stringify({ type: "state", time: now, players: gameState.pla
 wss.clients.forEach((c) => { if (c.readyState === WebSocket.OPEN) c.send(packet); });
 };
 }
+module.exports = { createGameLoop };
